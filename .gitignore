@@ -1,0 +1,21 @@
+# Entorno virtual
+.venv/
+venv/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Secretos — NUNCA quitar esta línea
+.env
+
+# PyCharm (configuración personal, no del proyecto)
+.idea/
+
+# macOS
+.DS_Store
+
+# Datos procesados y base vectorial (se regeneran)
+data/processed/
+chroma_db/
