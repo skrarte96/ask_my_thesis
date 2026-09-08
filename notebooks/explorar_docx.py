@@ -6,7 +6,7 @@ from docx import Document
 # Counter para obtener el diccionario de frecuencia de estilos de párrafo en el texto
 from collections import Counter
 
-# Vamos hasta la raíz
+# Vamos hasta la raíz. Este script solo funciona si está en una carpeta un nivel por debajo de la raíz
 RAIZ = Path(__file__).resolve().parent.parent
 # Path donde se encuentra la tesis en formato docx
 RUTA = RAIZ / "data" / "raw" / "electronic_and_optical_properties_of_organic_molecules_at_metal_surfaces_studied_by_scanning_tunneling_microscopy_oscar_jover_arrate_phd_thesis.docx"
