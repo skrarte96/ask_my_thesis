@@ -21,6 +21,7 @@ MINIMO = 100
 # Las referencias las tratamos de forma distinta señalándolas en función de los números a los que
 # se apuntan en las secciones. Ej [42] ref 42
 RUTAS_EXCLUIDAS = {
+    "Resumen",
     "Agradecimientos",
     "Chapter 8: Conclusiones Generales",
     "References",
@@ -29,16 +30,83 @@ RUTAS_EXCLUIDAS = {
 MINIMO_CHUNK = 300
 # Función que nos divide el texto en sus frases. Divide si encuentra uno de estos caracteres .!? y lo  siguiente es
 # uno o más espacios en blanco (space, tab...). (?<= esta parte es el lockbehind, es decir, lo que hace que cada vez que
-# se encuentre un espacio en blanco, se pregunte si antes hay un . ! o una ?.
+# se encuentre un espacio en blanco, se pregunte si antes hay un . ! o una ?. A parte, en caso de que tengamos párrafos
+# indivisibles como es el caso de una ecuación o un pie de página, lo trata como texto indivisible y lo adjunta tal cual
 def dividir_en_frases(texto):
-    return re.split(r"(?<=[.!?])\s+", texto)
+    unidades = []
 
-# Cogemos los
+    # Checkeamos cada línea
+    for linea in texto.split("\n"):
+        # Sacamos los espacios delante y atrás que word nos haya podido meter
+        linea = linea.strip()
+
+        # En caso de que no haya línea pasamos a la siguiente línea del bucle for
+        if not linea:
+            continue
+
+        # Dividimos por frases si es que se puede dividir
+        partes = re.split(r"(?<=[.!?])\s+", linea)
+
+        # En caso de que no se pueda dividir (pie de página o ecuación) la adjuntamos entera (la línea)
+        if len(partes) == 1:
+            unidades.append(linea)
+        else:
+            # Si se pudo dividir, adjuntamos la línea separada por sus frases
+            unidades.extend(partes)
+
+    # Devuelve las unidades, frases separadas, ecuaciones y pies de página siempre juntos
+    return unidades
+
+# Es una salvaguarda. Se activa en el caso de que una unidad sea más larga que un chunk entero. (que el TAMANO elegido)
+# Usamos esta función porque si la unidad es más larga que un chunk entero perdemos el significado de TAMANO y habrá
+# secciones con tamaño mayor que TAMANO.
+def partir_duro(frase, tamano, solape):
+    # Guardamos los trozos aquí
+    trozos = []
+    inicio = 0
+
+    # Mantenemos el bucle mientras nuestro contador (inicio) no haya llegado al final (len(frase).
+    # No tenemos buckle infinito porque inicio siempre crece en cada iteración
+    while inicio < len(frase):
+        # Final tentativo
+        fin = inicio + tamano
+
+        # Si fin fuese mayor que la longitud de la frase no tenemos donde cortar porque debe meterse entera para no
+        # perder su significado (la frase). Si fuese menor, tenemos que ver co´´o la rellenamos, en ese caso usamos
+        # .rfind
+        if fin < len(frase):
+            # Encuentra entre la longitud inicio y fin el último espacio, partimos entre palabras y no partimos ninguna
+            # palabra a la mitad. si no encuentra un espacio válido. rfind nos devuelve -1. rfind empieza a contar desde
+            # la derecha (desde el final)
+            hueco = frase.rfind(" ", inicio, fin)
+            # Si encontró un hueco válido y no un -1 de que no hay, movemos fin al hueco
+            if hueco > inicio:
+                fin = hueco
+
+        # Añade a la lista de trozos la frase partida por [inicio - fin]
+        trozos.append(frase[inicio:fin].strip())
+        # Elegimos el máximo de estos dos tramos, en caso de qu el corte posible (fin - solape) sea menor que el primer
+        # inicio acabaríamos con un bucle infinito, cogemos entonces inicip +1 y nos aseguramos que inicio siempre va
+        # en aumento
+        inicio = max(fin - solape, inicio + 1)
+
+    # Devuelve los trozos
+    return trozos
 def trocear(texto, tamano=TAMANO, solape=SOLAPE):
     if len(texto) <= tamano:
         return [texto]
 
-    frases = dividir_en_frases(texto)
+    # Colocamos aquí la división de frases y el partir duro en el caso de que sea necesario porque hemos encontrado una
+    # frase que se pasa de tamaño de chunk
+    frases = []
+    # para cada frase en las frases divididas
+    for f in dividir_en_frases(texto):
+        # si la longitud de tamaño excede la del chunk deseado (TAMANO), la partimos sin piedad
+        if len(f) > tamano:
+            frases.extend(partir_duro(f, tamano, solape))
+        # si no es necesario la adjuntamos a nuestras frases tranquilamente
+        else:
+            frases.append(f)
     trozos = []
     actual = ""
     # Juntamos frases hasta que tengan el tamaño especificado en TAMANO
@@ -74,7 +142,8 @@ def construir_chunks(secciones):
         if s["ruta"][0] in RUTAS_EXCLUIDAS:
             continue
 
-        texto = " ".join(s["parrafos"])
+        # Une las líneas de texto con separadores de línea
+        texto = "\n".join(s["parrafos"])
 
         # Nos saltamos los textos enteros de secciones si estos tienen menos de 100 caracteres, acabarían importando ruido
         # y no información
@@ -87,7 +156,8 @@ def construir_chunks(secciones):
         # Creamos una lista de diccionarios para cada chunk
         for i, trozo in enumerate(trocear(texto)):
             chunks.append({
-                "id": f"{len(chunks):04d}", # Len de los chunks con números enteros de 4 díjitos (rellena con 0 delante si necesario
+                "id": f"{len(chunks):04d}",
+                # Len de los chunks con números enteros de 4 dígitos (rellena con 0 delante si necesario)
                 "ruta": s["ruta"],
                 "seccion": ruta,
                 "parte": i + 1,                # Para tenerlas enumeradas

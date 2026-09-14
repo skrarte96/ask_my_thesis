@@ -1,102 +1,129 @@
-# Importamos librerías de rutas
+# Importamps las librerías para las rutas, la gestion de archivos .json y las regular expressions
 from pathlib import Path
-# Importamos librería json para abrir y leer archivos de dicho tipo
 import json
-# Importamos Document para leer el word con la tesis
-from docx import Document
+import re
 
-# Vamos hasta el file path raiz
+# Sacamos las rutas: raiz del proyecto, entrada con la tesis en formato .md y salida a para las secciones.json
 RAIZ = Path(__file__).resolve().parent.parent
-# Cogemos la ruta donde está el word con la tesis
-RUTA = RAIZ / "data" / "raw" / "electronic_and_optical_properties_of_organic_molecules_at_metal_surfaces_studied_by_scanning_tunneling_microscopy_oscar_jover_arrate_phd_thesis.docx"
-# Creamos archivo json con el word separado en secciones
+ENTRADA = RAIZ / "data" / "processed" / "tesis.md"
 SALIDA = RAIZ / "data" / "processed" / "secciones.json"
 
-# Dic con los estilos de título. Marcarán las posiciones de la lista jerarquía más abajo
-ESTILOS_TITULO = {"Heading 1": 0, "Heading 2": 1, "Heading 3": 2}
+# Niveles de Título (#), Sección (##) y Subsección (###)
+NIVELES = {"#": 0, "##": 1, "###": 2}
 
-# Set con los estilos de text que queremos conservar
-ESTILOS_CONTENIDO = {
-    "Normal", "Body Text", "Normal (Web)", "List Paragraph",
-    "Caption", "VA_Figure_Caption",
-}
+# Renombraremos contents por los acrónimos y constantes físicas que es con lo que nos vamos a quedar.
+# Tenemos que quitar los contents para que el modelo no se confunda y vaya a los títulos del índice en vez de a los de
+# la tesis que corresponden
+RENOMBRAR = {"Contents": "Acronyms and Physical Constants"}
 
-# Set con los estilos de texto que queremos ignorar
-ESTILOS_IGNORAR = {"table of figures"}
+# EXPRESIONES REGULARES PARA CAPTAR LA INFORMACION QUE SE INDICA TRAS LA BARRABAJA _
+# Para crear las secciones
+RE_TITULO = re.compile(r"^(#{1,6})\s+(.+?)(?:\s*\{[^}]*\})?\s*$")
+RE_LINEA_INDICE = re.compile(r"^\[.*\]\(#[^)]*\)\s*$")
+RE_SEPARADOR = re.compile(r"^[\s\-|:=+]+$")
 
-# Devuelve una lista de los elementos de la lista secciones. cada elemento tiene la ruta a la que pertenece y una lista
-# con los textos que pertenecen a esa ruta. por ruta nos referimos a la subsección de la tesis en la que estamos.
+# Para sustituir el texto en .md por texto legible para un humano
+RE_IMAGEN = re.compile(r"!\[(.*?)\]\([^)]*\)(?:\{[^}]*\})?", re.DOTALL)
+RE_ENLACE = re.compile(r"\[([^\]]*)\]\(#[^)]*\)")
+RE_ANCLA = re.compile(r"\[\]\{#[^}]*\}")
+RE_ESCAPES = re.compile(r"\\([\[\]()])")
+
+# Limpia las referencias de todo el texto dejando los títulos necesarios para que lo entienda un usuario.
+#  Ej: [Figure 2.1](#_Ref126134829) ---> Figure 2.1
+def limpiar(linea):
+    linea = RE_IMAGEN.sub(r"\1", linea)
+    linea = RE_ENLACE.sub(r"\1", linea)
+    linea = RE_ANCLA.sub("", linea)
+    linea = RE_ESCAPES.sub(r"\1", linea)
+    return linea.strip()
+
+# Función con la que crearemos nuestras secciones siendo los elementos de la lista diccionarios con la ruta y el texto
+# de esa seccion
 def extraer_secciones(ruta):
-    # Cargamos la tesis en doc
-    doc = Document(ruta)
-    # Lista vacía para crear una lista de secciones de texto de la tesis
+    # Lista vacía de secciones de texto a rellenar
     secciones = []
-    # Tres huecos para cada uno de los tres niveles de títulos definidos en ESTILO_TITULO.
-    # Aquí guardaremos donde nos encontramos exactamente. jerarquía[0] -> capítulo, jerarquía[1] -> sección y jerarquía[2] -> subsección
+    # Aquí metemos la jerarquía de títulos, secciones y subsecciones, el diccionario de NIVELES arriba nos indica
+    # los índices de la lista de jerarquía
     jerarquia = [None, None, None]
 
-    # Iteramos sobre todos los párrafos del documento
-    for p in doc.paragraphs:
-        # Quitamos de cada párrafo los espacios y saltos de línea
-        texto = p.text.strip()
-        # Guardamos el estilo en la var estilo (si es heading, list paragraph, caption...)
-        estilo = p.style.name
+    # Lee línea por línea el archivo que haya en la ruta separado por sus correspondientes líneas.
+    for linea in ruta.read_text(encoding="utf-8").splitlines():
+        # Ve si tenemos en esa línea un título segun nuestra regular expression
+        coincidencia = RE_TITULO.match(linea)
 
-        # Si texto está vacío o el estilo está en los estilos que queremos ignorar continúa sigue a la siguiente iteración
-        # Si es otra cosa salta al siguiente if
-        if not texto or estilo in ESTILOS_IGNORAR:
-            continue
+        # En caso de que tengamos una coincidencia True
+        if coincidencia:
+            # Coge el número de almohadillas y saca su valor en el diccionario de NIVELES
+            almohadillas = coincidencia.group(1)
+            nivel = NIVELES.get(almohadillas)
 
-        # Si el estilo de la p actual es de los de título
-        if estilo in ESTILOS_TITULO:
-            # Sacamos el nivel (número) del estilo de texto
-            nivel = ESTILOS_TITULO[estilo]
-            # Colocamos el título de texto en el índice de jerarquía correspondiente.
-            jerarquia[nivel] = texto
-            # Borra de jerarquía aquellos subniveles de donde se ha producido un cambio. Ejemplo, si cambiamos a una
-            # sección nueva, se pone None la subsección jerarquia[2]. Y si cambiamos a un capítulo nuevo, se pone None tanto la sección
-            # como la subsección jerarquia[1] y jerarquia[2]
+            # En caso de que no haya niveles continúa a la siguiente línea del bucle
+            if nivel is None:
+                continue
+
+            # Saca el texto del título (lo siguiente a las almohadillas)
+            titulo = coincidencia.group(2).strip()
+            # En caso de que haya algo o no en RENOMBRAR, lo cambia por el título que acabamos de sacar
+            titulo = RENOMBRAR.get(titulo, titulo)
+
+            # Metemos el título en la casilla de la lista de jerarquía que toca
+            jerarquia[nivel] = titulo
+            # En caso de que cambiemos de subsección o de título las jerarquías inferiores deben pasar a None
             for n in range(nivel + 1, 3):
                 jerarquia[n] = None
-            # En la lista secciones mete un diccionario. la ruta donde estamos y una lista vacía donde irán los textos
+
+            # Basicamente a nuestra lista de secciones (una lista de diccionarios) le metemos la lista con la ruta
+            # y dejamos el espacio para el texto con los párrafos
             secciones.append({
                 "ruta": [t for t in jerarquia if t],
                 "parrafos": [],
             })
-        # En el caso de que no hubiésemos tenido un título sino otra cosa por ejemplo cuerpo del párrafo (texto)
-        elif estilo in ESTILOS_CONTENIDO:
-            # En caso de que secciones no esté vacío se activa este if que, en la lista párrafos de secciones, en la última
-            # casilla de la lista, mete los textos que vayan perteneciendo a esa sección de la tesis
-            if secciones:
-                secciones[-1]["parrafos"].append(texto)
-    # En caso de que haya texto en los párrafos y no sean None, devuelve una lista de todos los elementos guardados en secciones
+            continue
+        # Tres razones seguidas, en caso de que encontremos que no haya nada en secciones (quitar todo lo que haya
+        # antes del primer título de la tesis), que haya una línea del índice o una línea que sea de separación
+        # pasamos olímpicamente de estas, solo queremos los títulos y los textos con sus fórmulas e imágenes
+        if not secciones:
+            continue
+
+        if RE_LINEA_INDICE.match(linea):
+            continue
+
+        if RE_SEPARADOR.match(linea):
+            continue
+
+        # Si ha pasado todos los filtros anteriores, la línea debe ser texto y por ende habrá que limpiar formatos en
+        # markdown para que pueda ser entendida por un humano
+        texto = limpiar(linea)
+
+        # Si de verdad tenemos texto (las anclas no tienen), lo incorporamos en secciones como el último párrafo
+        if texto:
+            secciones[-1]["parrafos"].append(texto)
+    # Devolvemos todas las secciones que no tengan párrafos vacíos
     return [s for s in secciones if s["parrafos"]]
 
-# De modo que esta parte del script solo se ejecute cuando la corremos directamente. Así podemos rescatar la función para
-# extraer_secciones() de arriba para otros scripts
+# Solo se ejecuta si corremos aquí el archivo o lo llamamos entero en otro con un import
 if __name__ == "__main__":
-    # Sacamos las secciones con sus rutas en el texto y el texto dentro de cada ruta (párrafos de la tesis)
-    secciones = extraer_secciones(RUTA)
+    # Extraemos las funciones en nuestra ruta de entrada
+    secciones = extraer_secciones(ENTRADA)
 
-    # Crea las carpetas que hay en SALIDA, la cual definimos antes y apunta a data/processed/secciones.json
-    # Crea los parents que hagan falta. Carpetas intermedias con parents = True
-    # En caso de que ya existan no hace nada (exist_ok = True) si no estuviera esto daría error
+    # Creamos en la carpeta de la ruta de salida una carpeta (en caso de que no exista ya) donde guardaremos nuestro
+    # archivo de secciones.json
     SALIDA.parent.mkdir(parents=True, exist_ok=True)
-    # En la ruta de SALIDA, escribe el archivo json. código utf-8
     with open(SALIDA, "w", encoding="utf-8") as f:
-        # Se escriben las secciones en el archivo f. Escribe las tildes como tal para que no se lean con código raro
-        # Con indent 2 sangra dos espacios por nivel. Así no escribe una línea kilométrica y podemos revisar el archivo una
-        # vez creado
         json.dump(secciones, f, ensure_ascii=False, indent=2)
 
-    # Printeamos informe de lo que se ha hecho
-    # Suma el número de caracteres que tienen todas las secciones juntas e indica donde los guarda (en la ruta SALIDA)
+    # Suma los caracteres totales de todos los párrafos sacados en secciones.json
     total = sum(len(" ".join(s["parrafos"])) for s in secciones)
+    # Suma el número de secciones que tienen ecuaciones
+    con_mates = sum(1 for s in secciones if "$" in " ".join(s["parrafos"]))
+
+    # Info de todo lo que hemos ido sacando
     print(f"Secciones con contenido: {len(secciones)}")
     print(f"Caracteres totales: {total:,}")
+    print(f"Secciones con ecuaciones: {con_mates}")
     print(f"\nGuardado en: {SALIDA}\n")
 
-    # Vemos las tres primeras secciones
+    # Enseña las tres primeras secciones con el número de párrafos y el de caracteres que presenta
     for s in secciones[:3]:
         print(" > ".join(s["ruta"]))
         print(f"   {len(s['parrafos'])} párrafos, {len(' '.join(s['parrafos']))} caracteres\n")
