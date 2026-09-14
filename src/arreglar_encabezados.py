@@ -15,15 +15,24 @@ SALIDA = RAIZ / "data" / "processed" / "tesis_limpia.md"
 ESTILOS = {"Heading 1": 1, "Heading 2": 2, "Heading 3": 3}
 
 # Regular expressions para sacar los títulos de MD y los adornos que pone MarkDown para poder compararlos con el texto
-# de word. Es decir detecta las [* ~ \ y ']
+# de word. Es decir detecta las [* ~ \ y '].
 RE_TITULO_MD = re.compile(r"^(#{1,6})\s+(.*?)(?:\s*\{[^}]*\})?\s*$")
 RE_ADORNOS = re.compile(r"[*~\\`]")
+# Detecta líneas que presenten la estructura de una imagen (capturaremos su texto alternativo)
+RE_ALT_IMAGEN = re.compile(r"^!\[([^\]]*)\]\([^)]*\)(\{[^}]*\})?\s*$")
+# Detectar prefijos de estructuras de encabezados coladas entre el texto
+RE_PREFIJO = re.compile(r"^(chapter \d+:|\d+(?:\.\d+)*)\s")
 
 # Función que elimina los adornos de MarkDown
 def normalizar(texto):
     texto = RE_ADORNOS.sub("", texto)
     return " ".join(texto.split()).lower()
 
+# Función que detecta las cabeceras de imagen que estén metidas dentro del texto y no en líneas sueltas
+def prefijo(texto):
+    # Si hay match con nuestra regular expression que detecte el prefijo de una referencia a encabezado
+    m = RE_PREFIJO.match(normalizar(texto))
+    return m.group(1) if m else None
 # Función que coge de cada párrafo, los textos que tengan por formato los puestos en nuestro diccionario ESTILOS,
 # es decir, los títulos, subtítulos y secciones. De parámetro solo necesita la ruta
 def encabezados_del_docx(ruta):
@@ -48,6 +57,12 @@ def encabezados_del_docx(ruta):
 def arreglar(lineas, titulos):
     # Esto y el siguiente bucle for es para recoger todos los títulos que pandoc ha marcado bien
     marcados = set()
+    # Crea un set con todos los prefijos para capturar encabezados entre el texto
+    prefijos = set()
+    for clave in titulos:
+        p = prefijo(clave)
+        if p:
+            prefijos.add(p)
     # Pasamos por el Markdown una vez entera
     # Mete en marcados los títulos que pandoc sí ha encontrado
     for linea in lineas:
@@ -65,6 +80,18 @@ def arreglar(lineas, titulos):
         if RE_TITULO_MD.match(linea):
             salida.append(linea)
             continue
+
+        # Si la línea es una imagen, sacamos el identificador de su texto alternativo
+        m_img = RE_ALT_IMAGEN.match(linea)
+        if m_img:
+            p = prefijo(m_img.group(1))
+            # Comprobamos si coincide con nuestros prefijos. Si lo hace, sustituimos la referencia, nos quedamos con
+            # la imagen pero no con el texto alternativo
+            if p and p in prefijos:
+                salida.append(linea.replace(f"![{m_img.group(1)}]", "![]", 1))
+                eliminadas += 1
+                continue
+
         # Si no hay títulos los normalizamos (quitamos los adornos)
         clave = normalizar(linea)
         # Si la clave no está en los títulos leídos con Document, debe ser texto y lo pegamos tal cual
