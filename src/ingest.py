@@ -5,7 +5,7 @@ import re
 
 # Sacamos las rutas: raiz del proyecto, entrada con la tesis en formato .md y salida a para las secciones.json
 RAIZ = Path(__file__).resolve().parent.parent
-ENTRADA = RAIZ / "data" / "processed" / "tesis.md"
+ENTRADA = RAIZ / "data" / "processed" / "tesis_limpia.md"
 SALIDA = RAIZ / "data" / "processed" / "secciones.json"
 
 # Niveles de Título (#), Sección (##) y Subsección (###)

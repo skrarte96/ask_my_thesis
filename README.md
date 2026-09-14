@@ -19,3 +19,20 @@ El código de este proyecto se publica bajo licencia MIT.
 
 La tesis depositada en Biblos-e Archive (UAM) es obra del autor y su reutilización requiere citar la fuente, reconocer la autoría, no obtener beneficio comercial y no realizar obras derivadas (equivalente a CC BY-NC-ND).
 
+## Requisitos previos
+
+- Python 3.12
+- [pandoc](https://pandoc.org) (`brew install pandoc` en macOS)
+
+## Uso
+
+1. Descarga la tesis desde el enlace de la sección Datos y colócala en `data/raw/`
+2. Ejecuta el pipeline:
+
+```bash
+python src/convertir.py           # .docx → markdown con ecuaciones e imágenes
+python src/arreglar_encabezados.py  # repara los encabezados perdidos
+python src/ingest.py              # markdown → secciones
+python src/chunk.py               # secciones → chunks
+python src/embed.py               # chunks → vectores
+```
