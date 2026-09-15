@@ -1,3 +1,6 @@
+> Documentación en español. El código y los comentarios técnicos siguen las
+> convenciones habituales en inglés cuando corresponde.
+
 # Ask My Thesis
 
 Sistema de preguntas y respuestas (RAG) sobre mi tesis doctoral en física, sobre
