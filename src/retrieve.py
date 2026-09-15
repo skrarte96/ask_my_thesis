@@ -56,7 +56,7 @@ if __name__ == "__main__":
     # Cargamos nuestro modelo
     modelo = cargar_modelo()
 
-    # Indicaciín de que hemos cargado nuestro modelo
+    # Indicación de que hemos cargado nuestro modelo
     print(f"\nÍndice cargado: {len(chunks)} chunks\n")
     print("Escribe una pregunta (o 'salir' o 'exit' o 'q' para terminar)\n")
 

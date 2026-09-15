@@ -1,0 +1,207 @@
+[
+  {
+    "pregunta": "Cómo se expresa la regla de oro de Fermi?",
+    "secciones": ["2.2"],
+    "tipo": "formula"
+  },
+  {
+    "pregunta": "How do it is written the Schrodinger equation formula for a 1D potential barrier?",
+    "secciones": ["2.3.1"],
+    "tipo": "formula"
+  },
+  {
+    "pregunta": "Cuál es la fórmula del Coeficiente de Transmisión?",
+    "secciones": ["2.3.1"],
+    "tipo": "formula"
+  },
+    {
+    "pregunta": "Which is the inelastic ratio formula to obtain the optical information in the Purcell Factor?",
+    "secciones": ["2.4.2"],
+    "tipo": "formula"
+  },
+  {
+    "pregunta": "What is the expression of the normalized difference in the Purcell Factor?",
+    "secciones": ["5.5.2"],
+    "tipo": "formula"
+  },
+  {
+    "pregunta": "Cómo obtuviste la emisión plasmónica de las phtalocianinas?",
+    "secciones": [],
+    "tipo": "trampa"
+  },
+    {
+    "pregunta": "How do you express the Scrodinger equation for a 2D potential barrier?",
+    "secciones": [],
+    "tipo": "trampa"
+  },
+  {
+    "pregunta": "What are the main conclusions in your experiments on C60 molecules?",
+    "secciones": [],
+    "tipo": "trampa"
+  },
+    {
+    "pregunta": "Cuáles son los efectos magnéticos de la emisión dada por las BPEA Y BPEN?",
+    "secciones": [],
+    "tipo": "trampa"
+  },
+  {
+    "pregunta": "Cómo interactúa el C90 depositado sobre KBr?",
+    "secciones": [],
+    "tipo": "trampa"
+  },
+  {
+    "pregunta": "What are the differences of depositing C90 on noble metals with respect on a dielectric material",
+    "secciones": ["4.2.1", "4.2.2", "4.2.3"],
+    "tipo": "comparativa"
+  },
+    {
+    "pregunta": "Qué diferencias hay entre la morfología del BPEA y BPEN en Au(111) y Ag(111)?",
+    "secciones": ["5.3.1", "5.4.1"],
+    "tipo": "comparativa"
+  },
+  {
+    "pregunta": "What are the electronic differences in BPEA and BPEN on Au(111) with respect Ag(111)?",
+    "secciones": ["5.3.2", "5.4.2"],
+    "tipo": "comparativa"
+  },
+    {
+    "pregunta": "What are the differences in the optical effects of PdTPP with respect FeClTPP",
+    "secciones": ["6.4.1", "6.4.2"],
+    "tipo": "comparativa"
+  },
+  {
+    "pregunta": "Como cambia un espectro sin normalizar frente a uno normalizado?",
+    "secciones": ["5.5.1"],
+    "tipo": "comparativa"
+  },
+    {
+    "pregunta": "Qué diferencias hay entre las transiciones ópticas del BPEA con respecto al BPEN?",
+    "secciones": ["5.7"],
+    "tipo": "comparativa"
+  },
+  {
+    "pregunta": "De cuanto es el desplazamiento en energía de los picos de los espectros normalizados del BPEA y BPEN con respecto al de Au(111)?",
+    "secciones": ["5.5.1"],
+    "tipo": "numerica"
+  },
+    {
+    "pregunta": "Cuál es la altura de las BPEA y BPEN en Au(111)?",
+    "secciones": ["5.4.1"],
+    "tipo": "numerica"
+  },
+  {
+    "pregunta": "Which is the shift amount of the peaks in the spectra of C90 on Au(111) with respect Ag(111)",
+    "secciones": ["4.4"],
+    "tipo": "numerica"
+  },
+  {
+    "pregunta": "What is the sublimation temperature of NaCl to create crystals on Ag(111)?",
+    "secciones": ["4.2.3"],
+    "tipo": "numerica"
+  },
+    {
+    "pregunta": "How long do we need to reduce the pressure from ambient pressure in the lock-load to reach High Vacuum?",
+    "secciones": ["3.6"],
+    "tipo": "numerica"
+  },
+  {
+    "pregunta": "Cuál es el valor de la masa del electrón?",
+    "secciones": ["Acronyms and Physical Constants"],
+    "tipo": "numerica"
+  },
+    {
+    "pregunta": "Qué significa HOMO?",
+    "secciones": ["Acronyms and Physical Constants"],
+    "tipo": "factual"
+  },
+  {
+    "pregunta": "Cómo preparaste las muestras?",
+    "secciones": ["3.5.1"],
+    "tipo": "factual"
+  },
+  {
+    "pregunta": "Cómo calculaste las alturas del C90 en Au(111)?",
+    "secciones": ["4.2.1"],
+    "tipo": "factual"
+  },
+    {
+    "pregunta": "How do you distinguish the molecular orbitals?",
+    "secciones": ["4.3.2"],
+    "tipo": "factual"
+  },
+  {
+    "pregunta": "Me resumes la tesis?",
+    "secciones": ["Abstract"],
+    "tipo": "factual"
+  },
+    {
+    "pregunta": "Qué son las nanoestructuras de carbono?",
+    "secciones": ["4.1"],
+    "tipo": "factual"
+  },
+  {
+    "pregunta": "Por qué cambia la transición óptica entre BPEA y BPEN?",
+    "secciones": ["5.7"],
+    "tipo": "factual"
+  },
+  {
+    "pregunta": "Cómo preparaste la muestra de PdTPP en Au(111)?",
+    "secciones": ["6.2.1"],
+    "tipo": "factual"
+  },
+    {
+    "pregunta": "Cómo identificaste los orbitales moleculares de FeClTPP en Au(111)?",
+    "secciones": ["6.2.2"],
+    "tipo": "factual"
+  },
+  {
+    "pregunta": "How do you demonstrate the measurement of optical information on molecules deposited on direct metals?",
+    "secciones": ["6.4.1", "6.4.2"],
+    "tipo": "factual"
+  },
+    {
+    "pregunta": "Can you explain the Tersoff and Hammann model?",
+    "secciones": ["2.3.3"],
+    "tipo": "factual"
+  },
+  {
+    "pregunta": "What are the differences between elastic and inelastic tunnelling transitions?",
+    "secciones": ["2.3.5"],
+    "tipo": "factual"
+  },
+  {
+    "pregunta": "What are the electronic effects on luminescence spectra?",
+    "secciones": ["2.4.2"],
+    "tipo": "factual"
+  },
+    {
+    "pregunta": "Cuáles son las principales conclusiones de la tesis?",
+    "secciones": ["Chapter 7: General Conclusions"],
+    "tipo": "general"
+  },
+  {
+    "pregunta": "Me puedes resumir un poco de qué va la tesis?",
+    "secciones": ["Abstract"],
+    "tipo": "general"
+  },
+    {
+    "pregunta": "Qué aplicaciones puede tener lo expuesto en esta tesis?",
+    "secciones": ["2.2"],
+    "tipo": "general"
+  },
+  {
+    "pregunta": "Cómo se obtuvo el ratio inelástico?",
+    "secciones": ["2.4.3"],
+    "tipo": "general"
+  },
+  {
+    "pregunta": "Cómo se normaliza un espectro?",
+    "secciones": ["2.4.3"],
+    "tipo": "general"
+  },
+    {
+    "pregunta": "What future impact can this thesis and research generate?",
+    "secciones": ["Chapter 7: General Conclusions"],
+    "tipo": "general"
+  }
+]

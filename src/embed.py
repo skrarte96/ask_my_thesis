@@ -20,7 +20,8 @@ MODELO = "intfloat/multilingual-e5-base"
 def cargar_modelo(nombre=MODELO):
     # Pequeño print para indicar que, como la primera vez tarda bastante, el programa no se ha colgado
     print(f"Cargando modelo {nombre}...")
-    return SentenceTransformer(nombre)
+    return SentenceTransformer(nombre)      # Función que te busca el modelo y si no está lo descarga
+# Define el espacio vectorial donde vectorizar los chunks luego
 
 # Vectorizamos nuestros chunks, incluyendo el passage: que requiere el modelo multilingual-e5-base
 # para trabajar con ellos
