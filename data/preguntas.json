@@ -21,7 +21,7 @@
   },
   {
     "pregunta": "What is the expression of the normalized difference in the Purcell Factor?",
-    "secciones": ["5.5.2"],
+    "secciones": ["5.5.2", "5.6"],
     "tipo": "formula"
   },
   {
@@ -186,12 +186,12 @@
   },
     {
     "pregunta": "Qué aplicaciones puede tener lo expuesto en esta tesis?",
-    "secciones": ["2.2"],
+    "secciones": ["Chapter 7: General Conclusions"],
     "tipo": "general"
   },
   {
     "pregunta": "Cómo se obtuvo el ratio inelástico?",
-    "secciones": ["2.4.3"],
+    "secciones": ["2.4.2","2.4.3"],
     "tipo": "general"
   },
   {

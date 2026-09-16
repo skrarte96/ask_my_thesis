@@ -263,6 +263,11 @@ mismo contexto recuperado.
   repartida por todo el documento y el sistema solo dispone de 5 fragmentos. Es una
   limitación estructural del RAG básico, no un fallo de implementación.
 
+- **Efecto de las ambigüedades en las preguntas**El recall@5 del 86% no es un techo del sistema sino un reflejo de la ambigüedad
+inherente a las preguntas en lenguaje natural. "¿Qué significa HOMO?" admite dos
+lecturas —el desarrollo de la sigla o el concepto físico— y el sistema resuelve la
+segunda. Las técnicas que mitigan esto (reescritura de consultas, búsqueda híbrida,
+memoria conversacional) quedan identificadas como trabajo futuro.
 ---
 
 ## Pendiente
@@ -279,6 +284,38 @@ mismo contexto recuperado.
 - [ ] *(opcional)* Enlazar las citas `[N]` con la bibliografía
 
 ---
+## Recalls
+
+Recall en función de k:
+
+| k | Recall (alguna sección) | Recall (todas) | Posición media del 1er acierto |
+|---|---|---|---|
+| 3 | 83 % | 72 % | 1,3 |
+| 5 | 86 % | 83 % | 1,4 |
+| 10 | 92 % | 92 % | 1,7 |
+
+Recall@5 por tipo de pregunta:
+
+| Tipo | Recall@5 | Recall@10 |
+|---|---|---|
+| comparativa | 6/6 (100 %) | 6/6 (100 %) |
+| formula | 5/5 (100 %) | 5/5 (100 %) |
+| numerica | 5/6 (83 %) | 6/6 (100 %) |
+| general | 5/6 (83 %) | 5/6 (83 %) |
+| factual | 10/13 (77 %) | 11/13 (85 %) |
+
+Calibración del umbral de similitud:
+
+| Grupo | Similitud media | Mínimo | Máximo |
+|---|---|---|---|
+| Preguntas con respuesta en la tesis | 0,836 | 0,748 | — |
+| Preguntas trampa | 0,833 | — | 0,877 |
+
+Las dos distribuciones están superpuestas: la pregunta trampa con mayor similitud
+(0,877) supera a cualquier pregunta legítima, y la más baja de estas (0,748) queda
+por debajo de la media de las trampas. No existe ningún umbral que separe ambos
+grupos, lo que descarta filtrar por similitud y obliga a delegar la abstención en
+el modelo de lenguaje.
 
 ## Datos
 

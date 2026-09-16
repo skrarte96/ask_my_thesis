@@ -16,6 +16,9 @@ TAMANO = 1000
 SOLAPE = 150
 MINIMO = 100
 
+# Quitamos los asteriscos en las abreviaturas para que se puedan vectorizar bien y no como ruido
+RE_ENFASIS = re.compile(r"[*_]{1,3}(?=\S)|(?<=\S)[*_]{1,3}")
+
 # Los agradecimientos no aportan nada en el contexto de la tesis.
 # Quitamos las conclusiones generales porque ya están en inglés y es repetir información.
 # Las referencias las tratamos de forma distinta señalándolas en función de los números a los que
@@ -144,6 +147,9 @@ def construir_chunks(secciones):
 
         # Une las líneas de texto con separadores de línea
         texto = "\n".join(s["parrafos"])
+
+        # Quitamos los asteriscos de las abreviaturas
+        texto = RE_ENFASIS.sub("", texto)
 
         # Nos saltamos los textos enteros de secciones si estos tienen menos de 100 caracteres, acabarían importando ruido
         # y no información
