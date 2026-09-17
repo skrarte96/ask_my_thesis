@@ -114,7 +114,7 @@ BACKENDS = {
 }
 
 
-def generar_respuesta(pregunta, resultados, backend="ollama"):
+def generar_respuesta(pregunta, resultados, backend="ollama", modelo = None):
     # Primero que nada chequeamos si el backend a meter es el correcto (tenemos un modelo aceptado de los que carga)
     if backend not in BACKENDS:
         raise ValueError(
@@ -134,9 +134,10 @@ def generar_respuesta(pregunta, resultados, backend="ollama"):
         )},                                             # Contexto dado y pregunta del usuario
     ]
 
-    # Sacamos la funcón de BACKENDS (el modelo a llamar) y luego los mensajes con el prompt, contexto y pregunta
+    # Sacamos la función de BACKENDS (el modelo a llamar) y luego los mensajes con el prompt, contexto y pregunta
+    if modelo:
+        return BACKENDS[backend](mensajes, modelo=modelo)
     return BACKENDS[backend](mensajes)
-
 
 if __name__ == "__main__":
     # Cargamos nuestras funciones personales

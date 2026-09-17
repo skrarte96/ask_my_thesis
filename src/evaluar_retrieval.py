@@ -35,6 +35,10 @@ def evaluar_una(caso, resultados):
     rutas = [r["seccion"] for r in resultados]
     # Las secciones escritas donde está la respuesta de nuestro .json
     esperadas = caso["secciones"]
+    # Sacamos el texto de cada chunk recuperado
+    textos = [r["texto"] for r in resultados]
+    # En caso de que existan, conseguimos los datos de contiene
+    contiene = caso.get("contiene")
 
     # Recorremos cada sección del .json y luego la comparamos con cada una de las rutas que devuelven los chunks.
     # En encontradas se devuelven aquellas rutas que coincidan con la sección puesta en el .json
@@ -55,6 +59,13 @@ def evaluar_una(caso, resultados):
             posicion = i
             break
 
+    # None: no hay contiene.
+    # True, la info está en los chunks recuperados.
+    # False, la info no está en los chunks recuperados
+    dato_presente = None
+    if contiene:
+        dato_presente = any(contiene in t for t in textos)
+
     # Devolvemos un diccionario con
     return {
         "pregunta": caso["pregunta"],                   # La pregunta escrita en el .json
@@ -63,6 +74,8 @@ def evaluar_una(caso, resultados):
         "encontradas": encontradas,                     # Las rutas que concuerdan con esas secciones
         "recuperadas": rutas,                           # Las rutas de todos los chunks recuperados
         "similitud_max": resultados[0]["similitud"],    # La máxima similitud que tiene el primer chunk
+        "contiene": contiene,                           # En caso de que exista, lo que debe contener
+        "dato_presente": dato_presente,                 # Contiene el dato? True o False
         "posicion": posicion,                           # Posición del chunk entre los k chunk que acertó con la/s
                                                         # secciones del .json que pusimos
     }
@@ -154,6 +167,33 @@ if __name__ == "__main__":
         # Calcular si podemos poner un umbral para separarlas o se tiene que encargar el LLM
         sim_reales = [e["similitud_max"] for e in reales]
         sim_trampas = [e["similitud_max"] for e in trampas]
+
+        # Sacamos las evaluaciones que tienen relleno contiene
+        con_dato = [e for e in reales if e["contiene"]]
+
+        # En caso de que tengan dato
+        if con_dato:
+            # Sumamos las preguntas que sacaron el dato que hacía falta de los chunks
+            presentes = sum(1 for e in con_dato if e["dato_presente"])
+
+            # Info de los datos que ha encontrado
+            print(f"\n=== RECALL ESTRICTO ({len(con_dato)} preguntas con dato) ===")
+            print(f"El dato concreto llega al contexto: {presentes}/{len(con_dato)}"
+                  f"  ({presentes / len(con_dato):.0%})")
+
+            # Aquellos en los que encuentra la sección correcta pero no el dato que hace falta.
+            falsos_aciertos = [
+                e for e in con_dato
+                if e["encontradas"] and not e["dato_presente"]
+            ]
+
+            # Info de los falsos aciertos en la consola
+            if falsos_aciertos:
+                print(f"\nFalsos aciertos ({len(falsos_aciertos)}): "
+                      f"sección correcta pero sin el dato")
+                for e in falsos_aciertos:
+                    print(f"   {e['pregunta'][:65]}")
+                    print(f"      buscaba: '{e['contiene']}'")
 
         # Info de las similitudes máximas
         print(f"\n=== SIMILITUD MÁXIMA ===")

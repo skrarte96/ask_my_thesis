@@ -1,27 +1,32 @@
 [
   {
-    "pregunta": "Cómo se expresa la regla de oro de Fermi?",
+    "pregunta": "Cómo se expresa el ratio de emisión espontánea de un emisor cuántico?",
     "secciones": ["2.2"],
+    "contiene": "Gamma",
     "tipo": "formula"
   },
   {
     "pregunta": "How do it is written the Schrodinger equation formula for a 1D potential barrier?",
     "secciones": ["2.3.1"],
+    "contiene": "\\varphi(x) = \\left\\{ \\begin{array}{r}",
     "tipo": "formula"
   },
   {
     "pregunta": "Cuál es la fórmula del Coeficiente de Transmisión?",
     "secciones": ["2.3.1"],
+    "contiene": "sinh",
     "tipo": "formula"
   },
     {
     "pregunta": "Which is the inelastic ratio formula to obtain the optical information in the Purcell Factor?",
     "secciones": ["2.4.2"],
+    "contiene": "mathcal",
     "tipo": "formula"
   },
   {
     "pregunta": "What is the expression of the normalized difference in the Purcell Factor?",
     "secciones": ["5.5.2", "5.6"],
+    "contiene": "Norm.\\ \\mathrm{\\Delta}Purcell = \\ \\frac",
     "tipo": "formula"
   },
   {
@@ -82,31 +87,37 @@
   {
     "pregunta": "De cuanto es el desplazamiento en energía de los picos de los espectros normalizados del BPEA y BPEN con respecto al de Au(111)?",
     "secciones": ["5.5.1"],
+    "contiene": "10 meV",
     "tipo": "numerica"
   },
     {
     "pregunta": "Cuál es la altura de las BPEA y BPEN en Au(111)?",
     "secciones": ["5.4.1"],
+    "contiene": "value of 1.5",
     "tipo": "numerica"
   },
   {
     "pregunta": "Which is the shift amount of the peaks in the spectra of C90 on Au(111) with respect Ag(111)",
     "secciones": ["4.4"],
+    "contiene": "0.6 V",
     "tipo": "numerica"
   },
   {
     "pregunta": "What is the sublimation temperature of NaCl to create crystals on Ag(111)?",
     "secciones": ["4.2.3"],
+    "contiene": "470",
     "tipo": "numerica"
   },
     {
     "pregunta": "How long do we need to reduce the pressure from ambient pressure in the lock-load to reach High Vacuum?",
     "secciones": ["3.6"],
+    "contiene": "2 h",
     "tipo": "numerica"
   },
   {
     "pregunta": "Cuál es el valor de la masa del electrón?",
     "secciones": ["Acronyms and Physical Constants"],
+    "contiene": "9.109",
     "tipo": "numerica"
   },
     {
