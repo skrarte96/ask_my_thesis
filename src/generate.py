@@ -5,7 +5,7 @@ import textwrap             # Estructura de printeo de texto más human-friendly
 # Hacer peticiones HTTP
 import urllib.error         # Capturar fallos de red
 import urllib.request       # Gestionar las peticiones
-
+import re                   # Importamos regular expressions
 
 # Ruta Raiz del proyecto
 RAIZ = Path(__file__).resolve().parent.parent
@@ -23,30 +23,48 @@ fragmentos que se te proporcionan.
 
 PRIMERO decide: ¿los fragmentos contienen la respuesta?
 
-Si NO la contienen, responde solo esta frase y nada más:
-"Esa información no aparece en la tesis."
+Si NO la contienen, responde solo esta frase, en el idioma que se te indique, y \
+nada más:
+  español: "Esa información no aparece en la tesis."
+  inglés: "That information does not appear in the thesis."
+
+Nunca combines una respuesta con esa frase: o respondes, o te abstienes.
 
 Si SÍ la contienen, sigue estas reglas:
 
-IDIOMA: responde en el mismo idioma de la pregunta. Pregunta en inglés, \
-respuesta en inglés.
+SIGLAS: escribe STM, STS, LDOS, DOS, HOMO, LUMO, BPEA, BPEN, PdTPP, FeClTPP, \
+CNT, SWCNT tal cual, en su forma original. Nunca inventes qué significan ni \
+traduzcas nombres de moléculas, técnicas o materiales.
 
-SIGLAS: escribe STM, LDOS, DOS, BPEA, HOMO, LUMO tal cual, en su forma original. \
-Nunca inventes qué significan.
+FÓRMULAS: si los fragmentos contienen una expresión matemática relevante para la \
+pregunta, INCLÚYELA literalmente en LaTeX, entre $ o $$, tal y como aparece. Nunca \
+te limites a referirte a ella ("según la Ecuación (23)", "como muestra la expresión \
+(4)"): si la mencionas, escríbela.
 
-DATOS: cada número, unidad y fórmula debe aparecer literalmente en los fragmentos, \
-referido a la misma magnitud. No reutilices un dato para algo distinto de aquello \
-a lo que se refiere.
+DATOS: cada número y unidad debe aparecer en los fragmentos, referido a la misma \
+magnitud. No reutilices un dato para algo distinto de aquello a lo que se refiere.
+
+TONO: usa el registro tentativo propio de un texto científico. Escribe "esto \
+sugiere", "los datos indican", "puede interpretarse como". Evita "esto demuestra" \
+o "queda probado". Si los fragmentos plantean una hipótesis sin cerrarla, \
+preséntala como hipótesis.
 
 CITAS: al final de cada frase, entre corchetes, el número de la subsección. \
 Ejemplo: "...decae exponencialmente con la distancia [2.3.3]." Si varios \
-fragmentos son de la misma subsección, cítala UNA sola vez. Nunca cites \
-títulos ni texto, solo números.
+fragmentos son de la misma subsección, cítala UNA sola vez. Dentro del texto \
+verás otros corchetes como [114]: son referencias bibliográficas, nunca las uses \
+como cita de sección.
 
-FORMA: prosa continua, sin títulos ni encabezados. Conserva el LaTeX tal cual.
+GLOSARIO (usa estas traducciones exactas): anthracene → antraceno, \
+naphthalene → naftaleno, fullerenes → fullerenos, nanoribbons → nanocintas, \
+fullertubes → fullertubos, annealing → annealing (no traducir), \
+sputtering → sputtering (no traducir), luminescence → luminiscencia\
+bias voltage → voltaje bias, tunnelling → túnel.
 
-Antes de terminar, revisa que cada dato numérico de tu respuesta está en los \
-fragmentos y se refiere a lo mismo."""
+FORMA: prosa continua, sin títulos ni encabezados.
+
+Antes de terminar, revisa que cada dato numérico está en los fragmentos y se \
+refiere a lo mismo."""
 
 # Tenemos que meterle el contexto y la pregunta. Luego los incorporamos con format
 PLANTILLA = """Contexto extraído de la tesis:
@@ -55,7 +73,52 @@ PLANTILLA = """Contexto extraído de la tesis:
 
 ---
 
-Pregunta: {pregunta}"""
+Pregunta: {pregunta}
+
+Responde en {idioma}."""
+
+# Para detectar el idioma, si español o inglés
+
+# Palabras clave para detectar si estamos preguntando en español
+MARCAS_ES = set("áéíóúñ¿¡")
+
+PALABRAS_ES = {
+    "qué", "cómo", "cuál", "cuáles", "cuándo", "dónde", "por",
+    "del", "las", "los", "una", "unos", "puedes", "hay", "entre",
+    "son", "esta", "este", "esa", "ese", "para", "con", "sobre",
+    "respecto", "diferencias", "fórmula", "valor", "el", "la", "un",
+    "uno", "unas", "me", "te", "le", "nos",
+    "que", "como", "cual", "cuales", "cuando", "donde", "por",
+}
+
+
+# Regular expression para detectar caracteres chinos
+RE_CJK = re.compile(r"[\u3000-\u9fff\uff00-\uffef]")
+
+# Mensaje a desplegar en caso de que el LLM se desmadre
+MENSAJE_FALLO = {
+    "español": "No he podido generar una respuesta fiable a esta pregunta.",
+    "inglés": "I could not generate a reliable answer to this question.",
+}
+
+# En caso de que detecte caracteres chinos, que no los detecte. A veces el LLM falla y devuelve su idioma chino de
+# fábrica
+def respuesta_valida(texto):
+    return not RE_CJK.search(texto)
+# Revisa la pregunta en busca de palabras clave y elige el idioma de respuesta
+def detectar_idioma(pregunta):
+    texto = pregunta.lower()
+
+    # Si detecta las palabras clave que hemos puesto en español, habla en español
+    if any(c in MARCAS_ES for c in texto):
+        return "español"
+
+    palabras = set(texto.replace("?", " ").replace("¿", " ").split())
+    if palabras & PALABRAS_ES:
+        return "español"
+
+    # Si no detectó nuestras palabras clave en español, responde en inglés
+    return "inglés"
 
 # Convertimos los 5 chunks en un solo texto cada uno empezando por su ruta para poderlo citar y separados los 5 chunks
 # por dobles líneas en blanco con --- entre medias de forma que se entienda que son 5 ideas distintas.
@@ -76,7 +139,10 @@ def llamar_ollama(mensajes, modelo=OLLAMA_MODELO, url=OLLAMA_URL):
         "model": modelo,                  # Indicamos el modelo
         "messages": mensajes,             # Lista de mensajes que incluirán el prompt del sistema y la plantilla rellena
         "stream": False,                  # Que salgan todos los token de golpe, en vez de poco a poco
-        "options": {"temperature": 0.2},  # 0 respuesta rígida, 1 respuesta muy creativa y puede divagar
+        "options": {
+            "temperature": 0.2,           # 0 respuesta rígida, 1 respuesta muy creativa y puede divagar
+            "stop": ["\nuser", "\nPregunta:", "\nQuestion:"],   # Para si detecta una de estas tres palabras
+                },
     }
 
     # Convertimos el cuerpo en lista de formato .json y luego codificamos a bytes
@@ -130,14 +196,23 @@ def generar_respuesta(pregunta, resultados, backend="ollama", modelo = None):
     mensajes = [
         {"role": "system", "content": SISTEMA},         # Da más importancia al ser role = system (aquí comportamiento)
         {"role": "user", "content": PLANTILLA.format(
-            contexto=contexto, pregunta=pregunta
-        )},                                             # Contexto dado y pregunta del usuario
+            contexto=contexto,
+            pregunta=pregunta,
+            idioma=detectar_idioma(pregunta),
+        )},                                             # Contexto dado, pregunta del usuario e idioma de respuesta
     ]
 
     # Sacamos la función de BACKENDS (el modelo a llamar) y luego los mensajes con el prompt, contexto y pregunta
     if modelo:
-        return BACKENDS[backend](mensajes, modelo=modelo)
-    return BACKENDS[backend](mensajes)
+        respuesta = BACKENDS[backend](mensajes, modelo=modelo)
+    else:
+        respuesta = BACKENDS[backend](mensajes)
+
+    # Metemos el mensaje de fallo en el idioma que toque si se desmadra el LLM
+    if not respuesta_valida(respuesta):
+        return MENSAJE_FALLO[idioma]
+
+    return respuesta
 
 if __name__ == "__main__":
     # Cargamos nuestras funciones personales

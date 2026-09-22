@@ -1,0 +1,207 @@
+{
+  "1": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "2": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "3": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "4": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "5": {
+    "correcta": "parcial",
+    "completa": "parcial",
+    "comentario": "El primer párrafo está bien pero la fórmula no es la correcta y el último párrafo no tiene que ver"
+  },
+  "6": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "7": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "8": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "9": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "10": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "11": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "12": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "13": {
+    "correcta": "parcial",
+    "completa": "parcial",
+    "comentario": "Al final mete la respuesta de luz que no viene al caso y luego no habla de la interacción electrónica de las moléculas en Ag(111)"
+  },
+  "14": {
+    "correcta": "parcial",
+    "completa": "parcial",
+    "comentario": "Los datos expuestos están bien si no metemos gran terminología porque debería hacer incapié en que habla de renormalized spectra, pero al final se confunde y la conclusión es que donde hay salto, ya sea mínimo o máximo a una energía, es que se ha captado esa absorción a esa energía"
+  },
+  "15": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": "Demasiado rotunda la frase, exceso de confianza, redactas más con un it suggests, indicates, can be interpreted as, comocomo la tesis"
+  },
+  "16": {
+    "correcta": "no",
+    "completa": "no",
+    "comentario": "el pico a 1.68 eV NO ES en disolución y luego al final acaba con una rotunda negación cuando hemos propuesto una explicación plausible"
+  },
+  "17": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": "pregunteé en espanol y está en inglés. la letra n con vergulilla no la detecta"
+  },
+  "18": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": "pregunte en espanol y me habla en ingles"
+  },
+  "19": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "20": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "21": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "22": {
+    "correcta": "no",
+    "completa": "no",
+    "comentario": "La info sí aparece en la tesis pero no la detecta. quiza es muy específica"
+  },
+  "23": {
+    "correcta": "parcial",
+    "completa": "parcial",
+    "comentario": "Muy bien contestado pero es de los acronimos no de la sección 4.4"
+  },
+  "24": {
+    "correcta": "parcial",
+    "completa": "parcial",
+    "comentario": "Casi bien, falta redactar que el annealing corrige la roughness del sputtering. pregunté en espanol y me salta en inglés"
+  },
+  "25": {
+    "correcta": "parcial",
+    "completa": "parcial",
+    "comentario": "contesta la altura que sale pero no como la calculo. midiendo con el stm"
+  },
+  "26": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": "Con la primera frase bastaba y si mete lel resto debería haber puesto que era un ejemplo de c90 en ag(111)"
+  },
+  "27": {
+    "correcta": "no",
+    "completa": "no",
+    "comentario": "sale mal ya lo sabemos pero bueno"
+  },
+  "28": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "29": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "30": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "31": {
+    "correcta": "no",
+    "completa": "no",
+    "comentario": "Sí que están los orbitales moleculares y cómo se definen"
+  },
+  "32": {
+    "correcta": "no",
+    "completa": "no",
+    "comentario": "no responde bien,es midiendo la respuesta plasmónica y encima mete al final esa info no sale en la tesis, hace las dos cosas decir que esta y no"
+  },
+  "33": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "34": {
+    "correcta": "si",
+    "completa": "parcial",
+    "comentario": "Creo que mezcla un poco conceptos pero no es una respuesta tan mala"
+  },
+  "35": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "36": {
+    "correcta": "parcial",
+    "completa": "parcial",
+    "comentario": "Las últimas frases no son correctas, mezcla el c90 con las interacciones  están mal explicadas"
+  },
+  "37": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "38": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "39": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": "al mencionar las secciones se atrabanca un poco pero de resto la respuesta es la correcta"
+  },
+  "40": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "41": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  }
+}

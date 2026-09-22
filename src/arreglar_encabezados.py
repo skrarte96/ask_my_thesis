@@ -1,3 +1,5 @@
+# Como no podemos cambiar el word, debemos hacer los arreglos a partir de un script de forma que cualquiera
+# que se descargue el word original, pueda procesar el archivo de forma correcta.
 # Quitamos los encabezados del archivo tesis.md a partir de la información que nos aporta word
 # Librerias de rutas y regular expressions
 from pathlib import Path
@@ -22,6 +24,8 @@ RE_ADORNOS = re.compile(r"[*~\\`]")
 RE_ALT_IMAGEN = re.compile(r"^!\[([^\]]*)\]\([^)]*\)(\{[^}]*\})?\s*$")
 # Detectar prefijos de estructuras de encabezados coladas entre el texto
 RE_PREFIJO = re.compile(r"^(chapter \d+:|\d+(?:\.\d+)*)\s")
+# Detectar las ecuaciones con erratas en word
+RE_MATES_CIERRE = re.compile(r"(?<![\\$])\$(?!\$)([^$\n]+?)(?<!\\)\$(?!\$)(\)*)")
 
 # Función que elimina los adornos de MarkDown
 def normalizar(texto):
@@ -53,7 +57,7 @@ def encabezados_del_docx(ruta):
 
     return titulos
 
-
+# Arreglamos los encabezados de word que nos salían mal al pasar con pandoc a Markdown
 def arreglar(lineas, titulos):
     # Esto y el siguiente bucle for es para recoger todos los títulos que pandoc ha marcado bien
     marcados = set()
@@ -105,7 +109,7 @@ def arreglar(lineas, titulos):
             continue
 
         # Si la clave no está en marcados o rescatados es un título a poner, sacamos la info del diccionario que hemos
-        # creado de titulos y la adjuntamos a salida con el formato de títulos de Markdown. Tambien añadimos la clave al
+        # creado de titulos y la adjuntamos a salida con el formato de títulos de Markdown. También añadimos la clave al
         # set de rescatados
         nivel, texto = titulos[clave]
         salida.append(f"{'#' * nivel} {texto}")
@@ -113,6 +117,25 @@ def arreglar(lineas, titulos):
 
     return salida, rescatados, eliminadas
 
+# Repara las expresiones del word mal formuladas
+def reparar_parentesis(linea):
+    def arreglar(m):
+        # Sacamos dividimos la fórmula entre lo que hay dentro de los $ y fuera
+        dentro, cierres = m.group(1), m.group(2)
+        # Resta el número de "(" al número de ")" si no es cero, faltan
+        faltan = dentro.count("(") - dentro.count(")")
+
+        # Si le falta a la fórmula al menos un paréntesis y los que faltan están fuera del $
+        # Entonces si no faltan paréntesis y no hay fuera, se deja la fórmula como está
+        if faltan <= 0 or len(cierres) < faltan:
+            return m.group(0)
+
+        # Se rehace la fórmula metiendo los paréntesis dentro que haga falta y quitando los de fuera
+        sobran = len(cierres) - faltan
+        return f"${dentro}{')' * faltan}${')' * sobran}"
+
+    # Devuelve nuestra función arreglar para la línea que detecte la regular expression de fórmula
+    return RE_MATES_CIERRE.sub(arreglar, linea)
 
 if __name__ == "__main__":
     # Sacamos todos los encabezados del documento con Document
@@ -122,6 +145,15 @@ if __name__ == "__main__":
     # Sacamos las variables salida, rescatados y eliminadas de la función arreglar
     salida, rescatados, eliminadas = arreglar(lineas, titulos)
 
+    # Arreglamos las ecuaciones rotas
+    antes = "\n".join(salida)
+    # Reparamos las fórmulas que hagan falta
+    salida = [reparar_parentesis(l) for l in salida]
+    # Vemos entre antes y al haber aplicado la función de reparar paréntesis, cuántas fórmulas hemos arreglado.
+    # Las sumamos si antes es distinto de salida, (algo ha cambiado)
+    reparadas = sum(1 for a, b in zip(antes.split("\n"), salida) if a != b)
+    # Printeamos el número de fórmulas que han sido reparadas
+    print(f"Líneas con fórmulas reparadas: {reparadas}")
     # Escribimos el archivo en la ruta de salida
     SALIDA.write_text("\n".join(salida), encoding="utf-8")
 

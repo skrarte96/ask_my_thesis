@@ -1,0 +1,207 @@
+{
+  "1": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "2": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "3": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "4": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "5": {
+    "correcta": "si",
+    "completa": "parcial",
+    "comentario": "Falta la equación, solo la nombra"
+  },
+  "6": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "7": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "8": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "9": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "10": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "11": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "12": {
+    "correcta": "parcial",
+    "completa": "parcial",
+    "comentario": "Es antraceno y naftaleno, se ha inventado lo de antropeno y náfuleno"
+  },
+  "13": {
+    "correcta": "no",
+    "completa": "no",
+    "comentario": "Si está la info pero es dificil para el modelo"
+  },
+  "14": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "15": {
+    "correcta": "parcial",
+    "completa": "parcial",
+    "comentario": "perfecto pero no puso la ecuacion"
+  },
+  "16": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "17": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": "s"
+  },
+  "18": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "19": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "20": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "21": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "22": {
+    "correcta": "no",
+    "completa": "no",
+    "comentario": "si aparece pero no encuentr las masas el modelo por lo que sea"
+  },
+  "23": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "24": {
+    "correcta": "parcial",
+    "completa": "parcial",
+    "comentario": "esta perfecta pero a dicho rearrajen que eso no existe, es reorganicen"
+  },
+  "25": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "26": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "27": {
+    "correcta": "no",
+    "completa": "no",
+    "comentario": "si aparece pero ya sabemos que algo tan abstracto no le sale"
+  },
+  "28": {
+    "correcta": "parcial",
+    "completa": "parcial",
+    "comentario": "lo dice bien pero traduce muy mal"
+  },
+  "29": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "30": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "31": {
+    "correcta": "parcial",
+    "completa": "parcial",
+    "comentario": "Si aparece en la tesis pero no le sale al modelo verlo aunque lo encuentra"
+  },
+  "32": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "33": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "34": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "35": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "36": {
+    "correcta": "parcial",
+    "completa": "parcial",
+    "comentario": "Falta las otra moléculas que no son el C90"
+  },
+  "37": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "38": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "39": {
+    "correcta": "no",
+    "completa": "no",
+    "comentario": "Ahora lo pone en chino y encima pone la pregunta y el idioma a responder, se ralla todo con esta pregunta"
+  },
+  "40": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "41": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  }
+}

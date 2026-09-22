@@ -1,0 +1,207 @@
+{
+  "1": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "2": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "3": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "4": {
+    "correcta": "parcial",
+    "completa": "parcial",
+    "comentario": "Lo hace bien pero en verdad no menciona la fórmula o una fórmula del inelastic ratio"
+  },
+  "5": {
+    "correcta": "parcial",
+    "completa": "parcial",
+    "comentario": "La responde pero no pone la fórmula"
+  },
+  "6": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "7": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "8": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "9": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "10": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "11": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "12": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "13": {
+    "correcta": "no",
+    "completa": "no",
+    "comentario": "Sí que aparece en la tesis la info y es mucha comparativa que se puede hacer"
+  },
+  "14": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "15": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "16": {
+    "correcta": "parcial",
+    "completa": "parcial",
+    "comentario": "Habla de los picos de absorción en disolución no de los obtenidos y se va un poco por las ramas al final pero no tanto en verdad"
+  },
+  "17": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "18": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "19": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "20": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "21": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "22": {
+    "correcta": "no",
+    "completa": "no",
+    "comentario": "Si aparece en los acrónimos y lo sabe porque es el segundo chunk y lo ha pillado pero se lo salta"
+  },
+  "23": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "24": {
+    "correcta": "si",
+    "completa": "parcial",
+    "comentario": "Está completa en verdad pero me gustaría que dijera que aplana la superficie con el annealing"
+  },
+  "25": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "26": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "27": {
+    "correcta": "no",
+    "completa": "no",
+    "comentario": "Si aparece pero ya sabemos que esta pregunta se le atraganta por ser tan general"
+  },
+  "28": {
+    "correcta": "parcial",
+    "completa": "parcial",
+    "comentario": "lo de fullerénidos se lo ha inventado, es fullerenos y lo de los nano ribetes también quizá eso debería quedarse en inglés"
+  },
+  "29": {
+    "correcta": "parcial",
+    "completa": "parcial",
+    "comentario": "Está bien lo que dice pero no propone la teoría que hemos dado"
+  },
+  "30": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "31": {
+    "correcta": "no",
+    "completa": "no",
+    "comentario": "Si que aparece en la tesis, se le atraganta a los dos modelos porque recupera los chunks estupendamente. pero no redacta al final"
+  },
+  "32": {
+    "correcta": "parcial",
+    "completa": "parcial",
+    "comentario": "Contesta algo con medio sentido pero no habla del proceso de normalización ni de cómo lo conectamos con lel espectro de absorción"
+  },
+  "33": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": "Lo explica pero juraría que el otro modelo sacaba las ecuaciones"
+  },
+  "34": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "35": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": "Creo que está bien mas o menos pero tirando a bien, yo desarrollaría más"
+  },
+  "36": {
+    "correcta": "parcial",
+    "completa": "parcial",
+    "comentario": "Genial pero falta toda la normalización y lo de la absorción con las otras cuatro moléculas que no son el c90"
+  },
+  "37": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "38": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "39": {
+    "correcta": "parcial",
+    "completa": "parcial",
+    "comentario": "Iba perfecto hasta que se ha trabado y ha puesto kanjis chinos y encima sigue con lo de esta info no sale en la tesis"
+  },
+  "40": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "41": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  }
+}

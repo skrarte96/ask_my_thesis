@@ -319,9 +319,14 @@ el modelo de lenguaje.
 
 ## Datos
 
-La tesis no se incluye en este repositorio por tamaño (251 MB en formato .docx).
-Descárgala desde [Biblos-e Archive (UAM)](http://hdl.handle.net/10486/715334) y
-colócala en `data/raw/`.
+El pipeline parte del documento original en formato .docx (251 MB), que no se
+incluye en el repositorio por tamaño. Descárgalo desde [Zenodo](enlace-con-DOI)
+y colócalo en `data/raw/`.
+
+La versión oficial de la tesis, en PDF, está depositada en
+[Biblos-e Archive (UAM)](http://hdl.handle.net/10486/715334). Se usa el .docx
+porque conserva las ecuaciones y la estructura de secciones, que se pierden al
+extraer texto de un PDF.
 
 ## Licencia
 

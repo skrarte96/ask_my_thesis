@@ -1,0 +1,207 @@
+{
+  "1": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "2": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "3": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "4": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "5": {
+    "correcta": "parcial",
+    "completa": "parcial",
+    "comentario": "Dice la ecuación pero no la pone"
+  },
+  "6": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "7": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "8": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "9": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "10": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "11": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "12": {
+    "correcta": "parcial",
+    "completa": "parcial",
+    "comentario": "Podría decir que los cuerpos poliaromáticos son distintos"
+  },
+  "13": {
+    "correcta": "no",
+    "completa": "no",
+    "comentario": "Si está en la tesis esa info"
+  },
+  "14": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "15": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "16": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "17": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "18": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "19": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "20": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "21": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "22": {
+    "correcta": "no",
+    "completa": "no",
+    "comentario": "Si aparece en la tesis"
+  },
+  "23": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "24": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "25": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "26": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "27": {
+    "correcta": "no",
+    "completa": "no",
+    "comentario": "Again esto sabemos que sale mal pero bueno"
+  },
+  "28": {
+    "correcta": "parcial",
+    "completa": "parcial",
+    "comentario": "Traduce mal fulerénidos"
+  },
+  "29": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "30": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "31": {
+    "correcta": "no",
+    "completa": "no",
+    "comentario": "Si aparece"
+  },
+  "32": {
+    "correcta": "parcial",
+    "completa": "si",
+    "comentario": "Raro pero puede ser una respuesta, no muy acertada"
+  },
+  "33": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "34": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "35": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "36": {
+    "correcta": "parcial",
+    "completa": "parcial",
+    "comentario": "Falta todo lo relacionado con la absorción y las otras moléculas"
+  },
+  "37": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "38": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  },
+  "39": {
+    "correcta": "no",
+    "completa": "no",
+    "comentario": "Se trabó todo y lo pueso en chino y puso lo de que esa info no sale en la tesis"
+  },
+  "40": {
+    "correcta": "parcial",
+    "completa": "parcial",
+    "comentario": "Perfecto pero menciona la ecuación sin ponerla"
+  },
+  "41": {
+    "correcta": "si",
+    "completa": "si",
+    "comentario": ""
+  }
+}
