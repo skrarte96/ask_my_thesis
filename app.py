@@ -1,11 +1,13 @@
 # Aplicación de streamlit con la estructura de preguntas y respuestas de la tesis
-
+from pathlib import Path
 import streamlit as st                              # Libreria de streamlit
 
 from src.embed import cargar_modelo                 # Para cargar el LLM que se vaya a usar
 from src.retrieve import cargar_indice, buscar      # Para cargar la tesis y buscar los chunks más adecuados
 from src.generate import generar_respuesta_stream   # Nuestro generador de respuestas
 import re                                           # Importamos regular expressions
+
+RAIZ = Path(__file__).resolve().parent
 
 # Título y subtítulo de la app
 TITULO = "Ask My Thesis"
@@ -82,6 +84,14 @@ def mostrar_fuentes(fuentes):
             with st.expander(f"{i}. {titulo}  ·  {f['similitud']:.3f}"):
                 st.caption(traducir_indices(" › ".join(ruta)))
                 st.markdown(sanear_latex(f["texto"]))
+
+                for img in f.get("imagenes", []):
+                    ruta_img = RAIZ / img["ruta"]
+                    if ruta_img.exists():
+                        st.image(
+                            str(ruta_img),
+                            caption=traducir_indices(img["pie"]) or None,
+                        )
 # Cargamos una sola vez (@st.cache_resource()) los chunks, vectores y el modelo
 @st.cache_resource(show_spinner="Cargando tesis / Loading thesis...")
 def preparar():
@@ -124,7 +134,7 @@ st.markdown("""
 # Añadimos título y subtítulo
 st.title(TITULO)
 st.markdown(SUBTITULO)
-
+st.caption("Cada respuesta incluye las fuentes de la tesis: despliégalas para ver el texto original y las figuras.")
 # Sacamos los chunks, vectores y el modelo
 chunks, vectores, modelo = preparar()
 

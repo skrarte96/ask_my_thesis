@@ -88,7 +88,7 @@ python -m pip install -r requirements.txt
 3. Ejecuta el pipeline (cada paso depende del anterior):
 
 ```bash
-python -m src.convertir              # .docx → tesis.md
+python -m src.convertir              # .docx → markdown, imágenes extraídas y comprimidas
 python -m src.arreglar_encabezados   # → tesis_limpia.md
 python -m src.ingest                 # → secciones.json
 python -m src.chunk                  # → chunks.json

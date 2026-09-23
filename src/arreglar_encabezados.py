@@ -9,7 +9,7 @@ from docx import Document
 # Rutas: RAIZ, raiz del proyecto; DOCX: donde está el word; ENTRADA: donde está nuestr tesis.md; SALIDA: donde guardaremos
 # nuestra tesis procesada
 RAIZ = Path(__file__).resolve().parent.parent
-DOCX = RAIZ / "data" / "raw" / "electronic_and_optical_properties_of_organic_molecules_at_metal_surfaces_studied_by_scanning_tunneling_microscopy_oscar_jover_arrate_phd_thesis.docx"
+DOCX = RAIZ / "data" / "raw" / "electronic_and_optical_properties_of_organic_molecules_at_metal_surfaces_studied_by_scanning_tunneling_microscopy.docx"
 ENTRADA = RAIZ / "data" / "processed" / "tesis.md"
 SALIDA = RAIZ / "data" / "processed" / "tesis_limpia.md"
 

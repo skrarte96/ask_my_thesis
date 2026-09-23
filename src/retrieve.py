@@ -45,6 +45,7 @@ def buscar(modelo, chunks, vectores, pregunta, k=TOP_K):
             "seccion": chunks[i]["seccion"],        # Sección a la que pertenece en la tesis
             "parte": chunks[i]["parte"],            # Chunk del que proviene
             "texto": chunks[i]["texto_limpio"],     # Texto limpio sin la ruta pegada
+            "imagenes": chunks[i].get("imagenes", [])
         })
 
     return resultados

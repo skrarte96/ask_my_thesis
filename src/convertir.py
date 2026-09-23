@@ -4,6 +4,7 @@ import re                 # Regular expressions
 import shutil             # Para buscar, mover o copiar ejecutables
 import subprocess         # Ejecuta otros programas para Python, con él llamamos a pandoc
 import zipfile            # Leer y escribir archivos .ZIP, los .word son .ZIP
+from PIL import Image     # Librería de imágenes de Python
 
 # Rutas: RAIZ del proyecto, donde tenemoes el DOCX, donde guardaremos el .md creado a partir del .docx y MEDIA, donde
 # guardaremos las imágenes de la tesis
@@ -13,6 +14,78 @@ SALIDA = RAIZ / "data" / "processed" / "tesis.md"
 MEDIA = RAIZ / "data" / "processed" / "media" / "media"
 # Regular expression para encontrar las imágenes .svg
 RE_SVG = re.compile(r"image(\d+)\.svg")
+# Capturamos toda la línea de la imagen: antes de la ruta, ruta y paréntesis de cierre
+RE_IMG_MD = re.compile(r"(!\[[^\]]*\]\()([^)]+)(\))")
+
+ANCHO_MAX = 1400
+CALIDAD = 85        # Más del 85% no ganamos tanto solo mucho peso de imagen
+# Metemos el fondo a la imagen, cambiamos a RGBA si tiene transparencia y a RGB si no
+def aplanar(img):
+    # Si tiene transparencia
+    if img.mode in ("RGBA", "LA", "P"):                 # Checkeamos todas las imágenes que con modos de transparencia
+        img = img.convert("RGBA")                       # Las pasamos todas a RGBA
+        fondo = Image.new("RGB", img.size, "white")     # Creamos lienzo blanco del mismo tamaño que imagen
+        fondo.paste(img, mask=img.split()[-1])          # Pegamos imagen usando máscara. Usamos canal alpha
+        return fondo                                    # Donde imagen es opaca se pega, donde es transparente blanco
+    return img.convert("RGB")                           # Devuelve imagen en RGB si no tenía transparencia
+                                                        # Lo que admite JPEG
+
+# Redimensionamos la imagen
+def redimensionar(img, ancho_max=ANCHO_MAX):
+    # Si ya es pequeña la dejamos tal cual
+    if img.width <= ancho_max:
+        return img
+    # Factor de conversión para sacar la altura de la imagen a partir del ancho máximo que queremos
+    alto = round(img.height * ancho_max / img.width)
+    # Image.LANCZOS es el remuestreo (darle el color a la imagen) Lento pero tenemos pocas imágenes y da mejor calidad
+    return img.resize((ancho_max, alto), Image.LANCZOS)
+
+# Aplanamos, redimensionamos y guardamos las imágenes y calculamos bytes antes y despúes para saber cuanto peso
+# hemos quitado
+def comprimir_imagenes(origen, destino):
+    # Le mete la ruta si no está ya
+    destino.mkdir(parents=True, exist_ok=True)
+
+    antes = 0       # Suma de bytes de imágenes originales
+    despues = 0     # Suma de bytes de imágenes comprimidas
+    n = 0           # Numero de imágenes
+
+    # Buscamos todo lo que haya en la carpeta de origen
+    for archivo in sorted(origen.glob("*")):
+        # Quitamos todo lo que no sea .png .jpg o .jpeg
+        if archivo.suffix.lower() not in (".png", ".jpg", ".jpeg"):
+            continue
+        # Ruta de salida del archivo y pasado a formato .jpg (con .stem quitamos la extension y carpetas, solo nombre
+        # del archivo)
+        salida = destino / (archivo.stem + ".jpg")
+
+        # Con las imágenes que queremos las aplanamos y redimensionamos y guardamos en la ruta de salida
+        with Image.open(archivo) as img:
+            img = aplanar(img)
+            img = redimensionar(img)
+            img.save(salida, "JPEG", quality=CALIDAD, optimize=True)
+
+        # Sumamos bytes de la original, la redimensionada y que hemos procesado una imagen más
+        antes += archivo.stat().st_size
+        despues += salida.stat().st_size
+        n += 1
+
+    return n, antes, despues
+
+def redirigir_a_comprimidas(md, carpeta_nueva):
+    # Cambiamos la ruta de la imagen a la nueva (data/media)
+    def cambiar(m):
+        # Sacamos el nombre de la imagen
+        nombre = Path(m.group(2)).stem + ".jpg"
+        # devolvemos la nueva ruta
+        return f"{m.group(1)}{carpeta_nueva}/{nombre}{m.group(3)}"
+
+    # Leemos la línea del md
+    texto = md.read_text(encoding="utf-8")
+    # Si coincide con nuestra re para una imagen hacemos los cambios de ruta
+    texto = RE_IMG_MD.sub(cambiar, texto)
+    # La sobreescribimos en el md
+    md.write_text(texto, encoding="utf-8")
 
 # Comprobamos si tenemos pandoc, si no, hay que instalarlo
 def comprobar_pandoc():
@@ -134,3 +207,12 @@ if __name__ == "__main__":
     print(f"Referencias SVG sin gemelo: {sin_gemelo}")
     print(f"Archivos SVG borrados: {borrados}")
     print(f"\nGuardado en: {SALIDA}")
+
+    # Procesado de imágenes, aplanado y redimensionado
+    MEDIA_FINAL = RAIZ / "data" / "media"
+
+    n_img, antes, despues = comprimir_imagenes(MEDIA, MEDIA_FINAL)
+    redirigir_a_comprimidas(SALIDA, "data/media")
+
+    print(f"\nImágenes comprimidas: {n_img}")
+    print(f"  {antes / 1024 / 1024:.1f} MB → {despues / 1024 / 1024:.1f} MB")

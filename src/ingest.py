@@ -27,7 +27,9 @@ RE_IMAGEN = re.compile(r"!\[(.*?)\]\([^)]*\)(?:\{[^}]*\})?", re.DOTALL)
 RE_ENLACE = re.compile(r"\[([^\]]*)\]\(#[^)]*\)")
 RE_ANCLA = re.compile(r"\[\]\{#[^}]*\}")
 RE_ESCAPES = re.compile(r"\\([\[\]()])")
-
+# Para sacar la ruta de imágenes
+RE_RUTA_IMAGEN = re.compile(r"!\[[^\]]*\]\(([^)]+)\)(?:\{[^}]*\})?")
+RE_PIE = re.compile(r"^:?\s*\**\s*(Figure|Table|Fig\.?)\s+\d", re.IGNORECASE)
 # Limpia las referencias de todo el texto dejando los títulos necesarios para que lo entienda un usuario.
 #  Ej: [Figure 2.1](#_Ref126134829) ---> Figure 2.1
 def limpiar(linea):
@@ -35,7 +37,39 @@ def limpiar(linea):
     linea = RE_ENLACE.sub(r"\1", linea)
     linea = RE_ANCLA.sub("", linea)
     linea = RE_ESCAPES.sub(r"\1", linea)
+    linea = linea.replace("{\\ }^{o}", "°").replace("^o^", "°")
     return linea.strip()
+# Emparejamos cada imagen con su pie de foto el argumento son todas las lineas de una sección para ver todas las
+# imágenes y pies
+def emparejar_imagenes(lineas):
+    imagenes = []
+
+    # Vamos línea por línea enumerada para saber la posición de la imagen y su pie
+    for i, linea in enumerate(lineas):
+        # Usamos finditer para que devuelva el objeto de coincidencia y su posición
+        for m in RE_RUTA_IMAGEN.finditer(linea):
+            # Limpiamos todo lo que viene después de la coincidencia de la imagen (m.end()).
+            #  (si el pie está en la misma línea que la foto así lo cogemos
+            resto = limpiar(linea[m.end():])
+
+            # Si l que queda en la línea tiene estructura de pie, es pie, si no se quita.
+            pie = resto if RE_PIE.match(resto) else ""
+
+            # Si no encontró el pie en la línea de la imagen busca en las tres siguientes
+            if not pie:
+                for siguiente in lineas[i + 1:i + 12]:
+                    # Como tenemos que irnos muy lejos para encontrar algunos pies de linea, si el programa encuentra
+                    # otra imagen antes del pie se salta esa iteración
+                    if RE_RUTA_IMAGEN.search(siguiente):
+                        break
+                    candidato = limpiar(siguiente)
+                    if RE_PIE.match(candidato):
+                        pie = candidato
+                        break
+            # Adjunta la ruta capturada de la imagen con su pie
+            imagenes.append({"ruta": m.group(1), "pie": pie})
+
+    return imagenes
 
 # Función con la que crearemos nuestras secciones siendo los elementos de la lista diccionarios con la ruta y el texto
 # de esa seccion
@@ -77,6 +111,7 @@ def extraer_secciones(ruta):
             secciones.append({
                 "ruta": [t for t in jerarquia if t],
                 "parrafos": [],
+                "lineas": [],
             })
             continue
         # Tres razones seguidas, en caso de que encontremos que no haya nada en secciones (quitar todo lo que haya
@@ -90,6 +125,9 @@ def extraer_secciones(ruta):
 
         if RE_SEPARADOR.match(linea):
             continue
+        # Guardamos la línea cruda porque necesitamos las referencias a imágenes para filtrarlas después
+        if secciones:
+            secciones[-1]["lineas"].append(linea)
 
         # Si ha pasado todos los filtros anteriores, la línea debe ser texto y por ende habrá que limpiar formatos en
         # markdown para que pueda ser entendida por un humano
@@ -98,8 +136,15 @@ def extraer_secciones(ruta):
         # Si de verdad tenemos texto (las anclas no tienen), lo incorporamos en secciones como el último párrafo
         if texto:
             secciones[-1]["parrafos"].append(texto)
-    # Devolvemos todas las secciones que no tengan párrafos vacíos
-    return [s for s in secciones if s["parrafos"]]
+
+    # Emparejamos las imágenes con las líneas y borramos la sección del .json con las líneas
+    # Solo la queríamos para sacar las imágenes
+    for s in secciones:
+        s["imagenes"] = emparejar_imagenes(s["lineas"])
+        del s["lineas"]
+
+    # Devolvemos todas las secciones que no tengan párrafos vacíos incluímos las imágenes
+    return [s for s in secciones if s["parrafos"] or s["imagenes"]]
 
 # Solo se ejecuta si corremos aquí el archivo o lo llamamos entero en otro con un import
 if __name__ == "__main__":
@@ -127,3 +172,11 @@ if __name__ == "__main__":
     for s in secciones[:3]:
         print(" > ".join(s["ruta"]))
         print(f"   {len(s['parrafos'])} párrafos, {len(' '.join(s['parrafos']))} caracteres\n")
+
+    # Para saber si tenemos las imágenes con sus pie de fotos
+    con_img = sum(1 for s in secciones if s["imagenes"])
+    total_img = sum(len(s["imagenes"]) for s in secciones)
+    con_pie = sum(1 for s in secciones for i in s["imagenes"] if i["pie"])
+
+    print(f"Secciones con imágenes: {con_img}")
+    print(f"Imágenes totales: {total_img} (con pie: {con_pie})")

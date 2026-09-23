@@ -166,9 +166,10 @@ def construir_chunks(secciones):
                 # Len de los chunks con números enteros de 4 dígitos (rellena con 0 delante si necesario)
                 "ruta": s["ruta"],
                 "seccion": ruta,
-                "parte": i + 1,                # Para tenerlas enumeradas
-                "texto": f"{ruta}\n\n{trozo}", # Texto completo incluyendo ruta
+                "parte": i + 1,                     # Para tenerlas enumeradas
+                "texto": f"{ruta}\n\n{trozo}",      # Texto completo incluyendo ruta
                 "texto_limpio": trozo,
+                "imagenes": s.get("imagenes", []),  # Metemos las imágenes
                 "n": len(trozo),
             })
 
