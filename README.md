@@ -3,6 +3,8 @@
 
 # Ask My Thesis
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22911361.svg)](https://doi.org/10.5281/zenodo.22911361)
+
 Sistema de preguntas y respuestas (RAG) sobre mi tesis doctoral en física, sobre
 microscopía de efecto túnel (STM) y plasmónica. Se le hace una pregunta en lenguaje
 natural, el sistema busca los fragmentos relevantes del documento y un modelo de
@@ -72,8 +74,8 @@ API para la parte de generación, de forma que nadie paga el consumo de otros.
 
 ## Uso
 
-1. Descarga la tesis desde [Biblos-e Archive (UAM)](http://hdl.handle.net/10486/715334)
-   y colócala en `data/raw/`.
+1. Descarga la tesis en formato .docx desde
+   [Zenodo](https://doi.org/10.5281/zenodo.22911361) y colócala en `data/raw/`.
 
 2. Instala las dependencias:
 
@@ -320,18 +322,20 @@ el modelo de lenguaje.
 ## Datos
 
 El pipeline parte del documento original en formato .docx (251 MB), que no se
-incluye en el repositorio por tamaño. Descárgalo desde [Zenodo](enlace-con-DOI)
-y colócalo en `data/raw/`.
+incluye en el repositorio por tamaño. Descárgalo desde Zenodo y colócalo en
+`data/raw/`:
+
+**https://doi.org/10.5281/zenodo.22911361**
 
 La versión oficial de la tesis, en PDF, está depositada en
-[Biblos-e Archive (UAM)](http://hdl.handle.net/10486/715334). Se usa el .docx
-porque conserva las ecuaciones y la estructura de secciones, que se pierden al
-extraer texto de un PDF.
+[Biblos-e Archive (UAM)](http://hdl.handle.net/10486/715334). El pipeline usa el
+.docx porque conserva las ecuaciones en formato editable y la estructura de
+secciones, que se pierden al extraer texto de un PDF.
 
 ## Licencia
 
 El código de este proyecto se publica bajo licencia MIT.
 
-La tesis depositada en Biblos-e Archive (UAM) es obra del autor y su reutilización
-requiere citar la fuente, reconocer la autoría, no obtener beneficio comercial y no
-realizar obras derivadas (equivalente a CC BY-NC-ND).
+La tesis es obra del autor y está depositada en Biblos-e Archive (UAM) y en
+Zenodo bajo licencia CC BY-NC-ND 4.0: su reutilización requiere citar la fuente,
+reconocer la autoría, no obtener beneficio comercial y no realizar obras derivadas.

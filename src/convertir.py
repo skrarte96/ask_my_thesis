@@ -8,7 +8,7 @@ import zipfile            # Leer y escribir archivos .ZIP, los .word son .ZIP
 # Rutas: RAIZ del proyecto, donde tenemoes el DOCX, donde guardaremos el .md creado a partir del .docx y MEDIA, donde
 # guardaremos las imágenes de la tesis
 RAIZ = Path(__file__).resolve().parent.parent
-DOCX = RAIZ / "data" / "raw" / "electronic_and_optical_properties_of_organic_molecules_at_metal_surfaces_studied_by_scanning_tunneling_microscopy_oscar_jover_arrate_phd_thesis.docx"
+DOCX = RAIZ / "data" / "raw" / "electronic_and_optical_properties_of_organic_molecules_at_metal_surfaces_studied_by_scanning_tunneling_microscopy.docx"
 SALIDA = RAIZ / "data" / "processed" / "tesis.md"
 MEDIA = RAIZ / "data" / "processed" / "media" / "media"
 # Regular expression para encontrar las imágenes .svg
