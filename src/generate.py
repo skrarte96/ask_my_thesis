@@ -166,8 +166,8 @@ def llamar_ollama(mensajes, modelo=OLLAMA_MODELO, url=OLLAMA_URL):
     except urllib.error.URLError as e:
         # No hemos podido conectar con la URL y el error más probable será no haber conectado con Ollama (ollama serve)
         raise RuntimeError(
-            f"No he podido hablar con Ollama en {url}. "
-            f"¿Está corriendo 'ollama serve'? Detalle: {e}"
+            f"No he podido hablar con Ollama en / Could not talk with Ollama in {url}. "
+            f"¿Está corriendo 'ollama serve'? Detalle: / Is 'ollama serve' running? Detail {e}"
         )
 
     # Del texto generado solo nos interesa el mensaje y el contenido
@@ -179,13 +179,67 @@ BACKENDS = {
     "ollama": llamar_ollama,
 }
 
+def llamar_ollama_stream(mensajes, modelo=OLLAMA_MODELO, url=OLLAMA_URL):
+    # Igual que llamar_ollama pero con stream true
+    cuerpo = {
+        "model": modelo,
+        "messages": mensajes,
+        "stream": True,
+        "options": {
+            "temperature": 0.2,
+            "stop": ["\nuser", "\nPregunta:", "\nQuestion:"],
+        },
+    }
+    # Convertimos el cuerpo en lista de formato .json y luego codificamos a bytes
+    datos = json.dumps(cuerpo).encode("utf-8")
 
+    # Construimos la petición HTTP
+    peticion = urllib.request.Request(
+        url,                                            # Url a donde conectar
+        data=datos,                                     # El json con el cuerpo codificado
+        headers={"Content-Type": "application/json"},   # Indicamos al servidor que mandamos .json para descodificarlo
+        method="POST",                                  # Porque enviamos datos
+    )
+    # Error Handling con el envío de la petición
+    try:
+        # Enviamos la petición
+        with urllib.request.urlopen(peticion, timeout=TIMEOUT) as respuesta:
+            # Vamos línea por línea según las va generando la respuesta
+            for linea in respuesta:
+                # Quitamos los espacions y los saltos
+                if not linea.strip():
+                    continue
+                # La línea creada por el modelo la descodificamos y convertimos a diccionario
+                trozo = json.loads(linea.decode("utf-8"))
+                # Pedimos el mensaje (si no hay, da diccionario vacío, y de ahí dame el contenido (si no hay, nada)
+                texto = trozo.get("message", {}).get("content", "")
+                # Si llegamos al final de la respuesta, rompemos el bucle
+                if trozo.get("done"):
+                    break
+                # Si hay texto, lo suelta sobre la marcha
+                if texto:
+                    yield texto
+    # En caso de que haya justo el tipo de error de conexión
+    except urllib.error.URLError as e:
+        # No hemos podido conectar con la URL y el error más probable será no haber conectado con Ollama (ollama serve)
+        raise RuntimeError(
+            f"No he podido hablar con Ollama en / Could not talk with Ollama in {url}. "
+            f"¿Está corriendo 'ollama serve'? Detalle: / Is 'ollama serve' running? Detail {e}"
+        )
+# Es la capa de abstracción donde luego incorporaremos el resto de modelos que este proyecto aceptará
+# De momento solo le guardamos la función de llamar a ollama como variable
+BACKENDS_STREAM = {
+    "ollama": llamar_ollama_stream,
+}
 def generar_respuesta(pregunta, resultados, backend="ollama", modelo = None):
     # Primero que nada chequeamos si el backend a meter es el correcto (tenemos un modelo aceptado de los que carga)
     if backend not in BACKENDS:
         raise ValueError(
-            f"Backend '{backend}' desconocido. Disponibles: {list(BACKENDS)}"
+            f"Backend '{backend}' desconocido / unknown. Disponibles/Available: {list(BACKENDS)}"
         )
+
+    # Detectamos idioma y formateamos el contexto
+    idioma = detectar_idioma(pregunta)
 
     # Con los resultados obtenidos de antes (los 5 chunks generados en retrieve.py con la función buscar, formateamos
     # los 5 chunks para crear el contexto
@@ -198,7 +252,7 @@ def generar_respuesta(pregunta, resultados, backend="ollama", modelo = None):
         {"role": "user", "content": PLANTILLA.format(
             contexto=contexto,
             pregunta=pregunta,
-            idioma=detectar_idioma(pregunta),
+            idioma=idioma,
         )},                                             # Contexto dado, pregunta del usuario e idioma de respuesta
     ]
 
@@ -214,6 +268,38 @@ def generar_respuesta(pregunta, resultados, backend="ollama", modelo = None):
 
     return respuesta
 
+def generar_respuesta_stream(pregunta, resultados, backend="ollama", modelo=None):
+    if backend not in BACKENDS_STREAM:
+        raise ValueError(
+            f"Backend '{backend}' no soporta streaming./Does not hold streaming "
+            f"Disponibles/Available: {list(BACKENDS_STREAM)}"
+        )
+    # Detectamos idioma y formateamos el contexto
+    idioma = detectar_idioma(pregunta)
+    contexto = formatear_contexto(resultados)
+    # Creamos la lista de mensajes a enviar al modelo, en este caso el prompt principal de comportamiento y luego la
+    # plantilla con el contexto recogido y la pregunta del usuario
+    mensajes = [
+        {"role": "system", "content": SISTEMA},
+        {"role": "user", "content": PLANTILLA.format(
+            contexto=contexto,
+            pregunta=pregunta,
+            idioma=idioma,
+        )},
+    ]
+    # Sacamos la función de BACKENDS (el modelo a llamar) y luego los mensajes con el prompt, contexto y pregunta
+    if modelo:
+        trozos = BACKENDS_STREAM[backend](mensajes, modelo=modelo)
+    else:
+        trozos = BACKENDS_STREAM[backend](mensajes)
+    # Guardamos la respuesta entera en un texto mientras la vamos printeando palabra por palabra
+    acumulado = ""
+    for trozo in trozos:
+        acumulado += trozo
+        yield trozo
+    # Si al final la respuesta no era válida (salen caracteres chinos) al final de la respuesta pone que no es válida
+    if not respuesta_valida(acumulado):
+        yield "\n\n---\n\n" + MENSAJE_FALLO[idioma]
 if __name__ == "__main__":
     # Cargamos nuestras funciones personales
     from src.embed import cargar_modelo

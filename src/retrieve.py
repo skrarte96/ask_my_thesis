@@ -41,8 +41,8 @@ def buscar(modelo, chunks, vectores, pregunta, k=TOP_K):
     resultados = []
     for i in mejores:
         resultados.append({
-            "similitud": float(similitudes[i]),    # Similitud
-            "seccion": chunks[i]["seccion"],        # Seccion a la que pertenece en la tesis
+            "similitud": float(similitudes[i]),     # Similitud
+            "seccion": chunks[i]["seccion"],        # Sección a la que pertenece en la tesis
             "parte": chunks[i]["parte"],            # Chunk del que proviene
             "texto": chunks[i]["texto_limpio"],     # Texto limpio sin la ruta pegada
         })
