@@ -76,11 +76,11 @@ def mostrar_fuentes(fuentes):
         # Sacamos la última parte de la ruta, la más indicativa
         for i, f in enumerate(fuentes, 1):
             ruta = f["seccion"].split(" > ")
-            titulo = ruta[-1]
+            titulo = traducir_indices(ruta[-1])
 
             # Colocamos para cada chunk recuerado su propio expander con todo el texto
             with st.expander(f"{i}. {titulo}  ·  {f['similitud']:.3f}"):
-                st.caption(" › ".join(ruta))
+                st.caption(traducir_indices(" › ".join(ruta)))
                 st.markdown(sanear_latex(f["texto"]))
 # Cargamos una sola vez (@st.cache_resource()) los chunks, vectores y el modelo
 @st.cache_resource(show_spinner="Cargando tesis / Loading thesis...")
