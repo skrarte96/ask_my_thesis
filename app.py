@@ -19,8 +19,9 @@ SUBTITULO = """¡Pregúntale a mi tesis! Hazle preguntas a mi tesis doctoral y e
 
 By Óscar Jover Arrate"""
 
-# Modelo a emplear
-MODELO_LLM = "qwen2.5:14b"
+# Modelo de ollama a emplear
+MODELO_OLLAMA = "qwen2.5:14b"
+
 # Número de chunks que devuelve
 K = 5
 
@@ -138,6 +139,51 @@ st.caption("Cada respuesta incluye las fuentes de la tesis: despliégalas para v
 # Sacamos los chunks, vectores y el modelo
 chunks, vectores, modelo = preparar()
 
+# Creamos lista de los proveedores de modelos, la key los que se verán en Streamlit y el value los que necesitamos
+# para que nuestros modelos funcionen
+PROVEEDORES = {
+    "Ollama (en tu ordenador)": "ollama",
+    "Google Gemini": "google",
+    "Anthropic Claude": "anthropic",
+}
+
+# Enlaces a nombrar donde se debe conseguir la clave API para Google y Anthropic
+ENLACES = {
+    "google": "https://aistudio.google.com/apikey",
+    "anthropic": "https://console.anthropic.com/settings/keys",
+}
+
+# Estructura del despliegue de modelos
+with st.sidebar:
+    # Título, los modelos
+    st.header("Modelo / Model")
+
+    # Caja con los modelos a elegir
+    etiqueta = st.selectbox("Proveedor / Provider", list(PROVEEDORES))
+    # Colocamos el modelo elegido en backend para usarlo
+    backend = PROVEEDORES[etiqueta]
+
+    # Si el backend es ollama, como necesitamos clave por el argumento en nuestra función de generate.py
+    # ponemos clave = None, aparte, mencionamos que ollama debería estar corriendo en el ordenador
+    if backend == "ollama":
+        clave = None
+        st.caption(
+            "Necesita Ollama corriendo en tu ordenador. / "
+            "Requires Ollama running on your machine."
+        )
+    # En caso de que sea un modelo distinto a ollama tendremos que pedir la API key.
+    # Indicamos donde se consigue y que solo se usa durante tu visita y no se guarda en ningún lado
+    else:
+        clave = st.text_input("Tu clave de API / Your API key", type="password")
+        st.caption(f"Consíguela en / Get one at: {ENLACES[backend]}")
+        st.caption(
+            "Se usa solo durante tu visita: no se guarda ni se registra en ningún sitio. / "
+            "Used only during your visit: never stored, never logged."
+        )
+
+# Directamente, forzamos a que si tenemos el modelo de ollama elegido se escoja el modelo que tenemos descargado
+modelo_llm = MODELO_OLLAMA if backend == "ollama" else None
+
 # Creamos el historial si todavía no existe
 if "historial" not in st.session_state:
     st.session_state.historial = []
@@ -160,6 +206,13 @@ pregunta = st.chat_input("Pregunta algo sobre la tesis...")
 
 # En caso de que se haya escrito algo, se guarda la pregunta
 if pregunta:
+    # En caso de que tengamos elegido un modelo distinto de ollama pero no tengamos clave API, damos mensaje de error
+    if backend != "ollama" and not clave:
+        st.warning(
+            "Introduce tu clave de API en la barra lateral. / "
+            "Enter your API key in the sidebar."
+        )
+        st.stop()
     st.session_state.historial.append({"rol": "user", "texto": pregunta})
     # Desde la perspectiva de chat de user de streamlit, se escribe la pregunta
     with st.chat_message("user"):
@@ -172,13 +225,19 @@ if pregunta:
             recuperados = buscar(modelo, chunks, vectores, pregunta, k=K)
             # Creamos un hueco para escribir indicar que el programa está corriendo y no parado
             hueco = st.empty()
-            hueco.markdown("_Pensando/Thinking..._")     # _texto_ es cursiva
+            hueco.markdown("_Pensando /Thinking..._")     # _texto_ es cursiva
 
         # Metemos un generador
         def con_aviso():
             primero = True
             # Para cada trozo en generar respuesta en formato streaming
-            for trozo in generar_respuesta_stream(pregunta, recuperados, modelo=MODELO_LLM):
+            for trozo in generar_respuesta_stream(
+                    pregunta,               # Pregunta del usuario
+                    recuperados,            # Chunks de la tesis recuperados
+                    backend=backend,        # Proveedor elegido en la barra lateral
+                    modelo=modelo_llm,      # modelo a usar
+                    clave=clave             # API key que ha insertado el usuario
+            ):
                 # Si es el primer token, quita el pensando del hueco y ya luego no lo pone más
                 if primero:
                     hueco.empty()
@@ -187,9 +246,15 @@ if pregunta:
 
         # Creamos contenedor para repintar la respuesta cuando la tengamos entera
         contenedor = st.empty()
-        # Hacemos respuesta en streaming
-        with contenedor:
-            respuesta = st.write_stream(con_aviso())
+        # Hacemos respuesta en streaming y con error handling
+        try:
+            with contenedor:
+                # Aquí es donde hacemos verdaderamente la petición
+                respuesta = st.write_stream(con_aviso())
+        except RuntimeError as error:
+            hueco.empty()           # Quitamos el "Pensando..." o se queda ahí colgado
+            st.error(str(error))    # Printeamos el error en la app
+            st.stop()               # Paramos la app
         # La repasamos para corregir y la reprinteamos
         respuesta = sanear_latex(respuesta)
         contenedor.markdown(respuesta)
