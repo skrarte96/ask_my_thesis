@@ -255,9 +255,20 @@ if pregunta:
             hueco.empty()           # Quitamos el "Pensando..." o se queda ahí colgado
             st.error(str(error))    # Printeamos el error en la app
             st.stop()               # Paramos la app
+
+        # --- diagnóstico temporal ---
+        bruta = respuesta
+        limpia = sanear_latex(bruta)
+
+        st.code(repr(bruta)[:1500], language="text")  # lo que dio el modelo
+        st.code(repr(limpia)[:1500], language="text")  # lo que sale de sanear_latex
+
+        respuesta = limpia
         # La repasamos para corregir y la reprinteamos
         respuesta = sanear_latex(respuesta)
-        contenedor.markdown(respuesta)
+
+
+        #contenedor.markdown(respuesta)
 
         # Creamos el desplegable con los chunks para esa pregunta
         mostrar_fuentes(recuperados)

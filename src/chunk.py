@@ -1,3 +1,4 @@
+# Coge todas nuestras secciones divididas y lo que hace es crear los chunks
 # Librerias para las rutas y para el archivo .json creado de la tesis
 from pathlib import Path
 import json
@@ -11,13 +12,26 @@ ENTRADA = RAIZ / "data" / "processed" / "secciones.json"
 SALIDA = RAIZ / "data" / "processed" / "chunks.json"
 
 # Tamaño de los chunks, solape entre ellos, mínima longitud de caracteres para no ser eliminada esa sección.
-# Las unidades son caracteres.
+# Las unidades son caracteres y mínimo tamaño de chunk que deberíamos tener,
+# para evitar acabar con un último chunk muy pequeño que no nos permita guardar información útil
 TAMANO = 1000
-SOLAPE = 150
 MINIMO = 100
+MINIMO_CHUNK = 300
 
-# Quitamos los asteriscos en las abreviaturas para que se puedan vectorizar bien y no como ruido
-RE_ENFASIS = re.compile(r"[*_]{1,3}(?=\S)|(?<=\S)[*_]{1,3}")
+# Carácter que no existe en la tesis: lo usamos como marcador temporal para las fórmulas
+MARCA = "\x00"
+
+# Número de frases que vamos a meter de solape (evitamos cortar por caracteres para no perder significados
+# y romper fórmulas
+FRASES_SOLAPE = 2
+
+# Fórmulas completas, de bloque o de línea. re.DOTALL porque una fórmula de
+# bloque puede ocupar varias líneas y necesitamos cogerla entera.
+RE_FORMULA = re.compile(r"\$\$.+?\$\$|\$[^$\n]+?\$", re.DOTALL)
+
+# Quitamos las negritas en markdown que rompen las abreviaturas para que se puedan vectorizar bien y no como ruido
+# Esperanza de que el programa las entienda y las ponga cuando alguien pregunte por las abreviaturas
+RE_NEGRITA = re.compile(r"[*]{2,3}(?=\S)|(?<=\S)[*]{2,3}")
 
 # Los agradecimientos no aportan nada en el contexto de la tesis.
 # Quitamos las conclusiones generales porque ya están en inglés y es repetir información.
@@ -29,13 +43,38 @@ RUTAS_EXCLUIDAS = {
     "Chapter 8: Conclusiones Generales",
     "References",
 }
-# Para evitar acabar con un último chunk muy pequeño que no nos permita guardar información útil
-MINIMO_CHUNK = 300
+# Mete el marcador en las fórmulas de forma que cada una esté numerada con los caracteres de MARCA que sabemos
+# con seguridad que no están en el texto de la tesis
+def proteger_formulas(texto):
+    # Guardamos las fórmulas aquí
+    formulas = []
+
+    # Colocamos las marcas
+    def guardar(m):
+        formulas.append(m.group(0))
+        return f"{MARCA}{len(formulas) - 1}{MARCA}"
+
+    # Devolvemos la fórmula marcada y su texto de fórmula
+    return RE_FORMULA.sub(guardar, texto), formulas
+
+# Esta función restaura la fórmula después del procesado de los trozos texto
+def restaurar_formulas(texto, formulas):
+
+    return re.sub(
+        rf"{MARCA}(\d+){MARCA}",                # Capturamos número de fórmula
+        lambda m: formulas[int(m.group(1))],    # Cogemos ese número
+        texto,                                  # Sustituimos número por fórmula (igual al índice en formulas)
+    )
+
 # Función que nos divide el texto en sus frases. Divide si encuentra uno de estos caracteres .!? y lo  siguiente es
-# uno o más espacios en blanco (space, tab...). (?<= esta parte es el lockbehind, es decir, lo que hace que cada vez que
+# uno o más espacios en blanco (space, tab...) (?<= esta parte es el lock-behind, es decir, lo que hace que cada vez que
 # se encuentre un espacio en blanco, se pregunte si antes hay un . ! o una ?. A parte, en caso de que tengamos párrafos
 # indivisibles como es el caso de una ecuación o un pie de página, lo trata como texto indivisible y lo adjunta tal cual
+# Las fórmulas están protegidas antes de ser separadas de forma que no aparezcan rotas en los chunks luego
 def dividir_en_frases(texto):
+    # antes de hacer nada protegemos las fórmulas
+    texto, formulas = proteger_formulas(texto)
+
     unidades = []
 
     # Checkeamos cada línea
@@ -58,85 +97,56 @@ def dividir_en_frases(texto):
             unidades.extend(partes)
 
     # Devuelve las unidades, frases separadas, ecuaciones y pies de página siempre juntos
-    return unidades
+    # Vuelve a colocar las fórmulas
+    return [restaurar_formulas(u, formulas) for u in unidades]
 
-# Es una salvaguarda. Se activa en el caso de que una unidad sea más larga que un chunk entero. (que el TAMANO elegido)
-# Usamos esta función porque si la unidad es más larga que un chunk entero perdemos el significado de TAMANO y habrá
-# secciones con tamaño mayor que TAMANO.
-def partir_duro(frase, tamano, solape):
-    # Guardamos los trozos aquí
+def trocear(texto, tamano=TAMANO, frases_solape=FRASES_SOLAPE):
+    # Dividimos el texto en frases
+    unidades = dividir_en_frases(texto)
+    # Si no tenemos nada que dividir devolvemos una lista vacía
+    if not unidades:
+        return []
+
+    # Donde irán los trozos y en actual, la lista de chunks que iremos montando
     trozos = []
-    inicio = 0
+    actual = []
 
-    # Mantenemos el bucle mientras nuestro contador (inicio) no haya llegado al final (len(frase).
-    # No tenemos buckle infinito porque inicio siempre crece en cada iteración
-    while inicio < len(frase):
-        # Final tentativo
-        fin = inicio + tamano
+    # Vamos frase por frase de la tesis
+    for unidad in unidades:
 
-        # Si fin fuese mayor que la longitud de la frase no tenemos donde cortar porque debe meterse entera para no
-        # perder su significado (la frase). Si fuese menor, tenemos que ver co´´o la rellenamos, en ese caso usamos
-        # .rfind
-        if fin < len(frase):
-            # Encuentra entre la longitud inicio y fin el último espacio, partimos entre palabras y no partimos ninguna
-            # palabra a la mitad. si no encuentra un espacio válido. rfind nos devuelve -1. rfind empieza a contar desde
-            # la derecha (desde el final)
-            hueco = frase.rfind(" ", inicio, fin)
-            # Si encontró un hueco válido y no un -1 de que no hay, movemos fin al hueco
-            if hueco > inicio:
-                fin = hueco
+        # Número de caracteres que ocupa el chunk +1 de los espacios entre frases
+        ocupado = sum(len(u) + 1 for u in actual)
 
-        # Añade a la lista de trozos la frase partida por [inicio - fin]
-        trozos.append(frase[inicio:fin].strip())
-        # Elegimos el máximo de estos dos tramos, en caso de qu el corte posible (fin - solape) sea menor que el primer
-        # inicio acabaríamos con un bucle infinito, cogemos entonces inicip +1 y nos aseguramos que inicio siempre va
-        # en aumento
-        inicio = max(fin - solape, inicio + 1)
+        # Si al meter esta frase nos pasamos, cerramos el chunk
+        if actual and ocupado + len(unidad) > tamano:
+            trozos.append(" ".join(actual))
 
-    # Devuelve los trozos
-    return trozos
-def trocear(texto, tamano=TAMANO, solape=SOLAPE):
-    if len(texto) <= tamano:
-        return [texto]
+            # El siguiente chunk arranca repitiendo las últimas frases del anterior
+            cola = actual[-frases_solape:]
 
-    # Colocamos aquí la división de frases y el partir duro en el caso de que sea necesario porque hemos encontrado una
-    # frase que se pasa de tamaño de chunk
-    frases = []
-    # para cada frase en las frases divididas
-    for f in dividir_en_frases(texto):
-        # si la longitud de tamaño excede la del chunk deseado (TAMANO), la partimos sin piedad
-        if len(f) > tamano:
-            frases.extend(partir_duro(f, tamano, solape))
-        # si no es necesario la adjuntamos a nuestras frases tranquilamente
-        else:
-            frases.append(f)
-    trozos = []
-    actual = ""
-    # Juntamos frases hasta que tengan el tamaño especificado en TAMANO
-    for frase in frases:
-        # Para ir pegando las frases cuando son demasiado pequeñas
-        if len(actual) + len(frase) + 1 <= tamano:
-            actual = f"{actual} {frase}".strip()
-        else:
-            # Si actual no está vacío
-            if actual:
-                # Formamos el primer trozo (chunk)
-                trozos.append(actual)
-            # Si actual está vacío se queda vacío, si no lo está coge el solape y lo junta con la frase
-            cola = actual[-solape:] if actual else ""
-            actual = f"{cola} {frase}".strip()
-    # Si actual no está vacío cuando acabe el bucle añade a trozos el último solape y la última frase
+            # Si no caben porque el solape ocupa la mitad de tamaño del chunk,
+            # vamos soltando la frase más antigua hasta que quepa.
+            # Así nos quedamos sin solape solo cuando ni una sola frase cabe,
+            # que es el caso de una fórmula de bloque enorme
+            while cola and sum(len(u) + 1 for u in cola) > tamano // 2:
+                cola = cola[1:]
+            # Aquí metemos lo que quede de la cola
+            actual = cola
+
+        # Metemos la siguiente frase en actual (el chunk a montar)
+        actual.append(unidad)
+    # Si queda un último cúmulo de frases en actual
     if actual:
-        # Si trozos no está vacía y la len(actual) es menor que el número de caracteres mínimo puesto para un chunk
-        # añadimos el actual pequeño final a el último trozo de la lista
-        if trozos and len(actual) < MINIMO_CHUNK:
-            trozos[-1] = f"{trozos[-1]} {actual}".strip()
+        # Lo metemos todo en la variable último
+        ultimo = " ".join(actual)
+        # Si tenemos trozos hechos y ese último es menor que el mínimo puesto, lo adjuntamos al último trozo
+        # Mejor que nos quede un trozo grande a uno pequeño
+        if trozos and len(ultimo) < MINIMO_CHUNK:
+            trozos[-1] = f"{trozos[-1]} {ultimo}".strip()
         else:
-            # En caso de que actual sea mayor que MINIMO_CHUNK lo adjuntamos como trozo final y ya
-            trozos.append(actual)
+            trozos.append(ultimo)
 
     return trozos
-
 
 def construir_chunks(secciones):
     chunks = []
@@ -149,7 +159,7 @@ def construir_chunks(secciones):
         texto = "\n".join(s["parrafos"])
 
         # Quitamos los asteriscos de las abreviaturas
-        texto = RE_ENFASIS.sub("", texto)
+        texto = RE_NEGRITA.sub("", texto)
 
         # Nos saltamos los textos enteros de secciones si estos tienen menos de 100 caracteres, acabarían importando ruido
         # y no información
