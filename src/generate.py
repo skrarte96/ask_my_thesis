@@ -62,9 +62,8 @@ CNT, SWCNT tal cual, en su forma original. Nunca inventes qué significan ni \
 traduzcas nombres de moléculas, técnicas o materiales.
 
 FÓRMULAS: si los fragmentos contienen una expresión matemática relevante para la \
-pregunta, INCLÚYELA literalmente en LaTeX, entre $ o $$, tal y como aparece. Nunca \
-te limites a referirte a ella ("según la Ecuación (23)", "como muestra la expresión \
-(4)"): si la mencionas, escríbela.
+pregunta, INCLÚYELA literalmente en LaTeX. Usa $ para las expresiones en \
+línea y $$ para las de bloque. NUNCA uses \( \) ni \[ \] como delimitadores.
 
 DATOS: cada número y unidad debe aparecer en los fragmentos, referido a la misma \
 magnitud. No reutilices un dato para algo distinto de aquello a lo que se refiere.

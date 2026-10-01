@@ -38,6 +38,20 @@ RE_END = re.compile(r"\\end\{")
 # Capta los subíndices y superíndices de markdown que deberían ser de Latex
 RE_SUB = re.compile(r"(?<=\w)~([^~\s]{1,12})~")
 RE_SUP = re.compile(r"\^([^\^\s]{1,12})\^")
+
+# El LLM a veces usa los delimitadores de LaTeX \( \) y \[ \] en vez de $ y $$.
+# Son válidos en LaTeX pero Streamlit no los entiende, así que los traducimos.
+# Esto normaliza lo que devuelve el modelo, que es una entrada externa que no controlamos.
+RE_MATE_BLOQUE = re.compile(r"\\\[(.+?)\\\]", re.DOTALL)
+RE_MATE_LINEA = re.compile(r"\\\((.+?)\\\)", re.DOTALL)
+
+# En el caso de que los modelos no nos coloquen los $ de Latex y o hagan con otros delimitadores
+# los sustituimos aquí por los $ para que Streamlit los pueda entender
+def normalizar_delimitadores(texto):
+    texto = RE_MATE_BLOQUE.sub(r"$$\1$$", texto)
+    texto = RE_MATE_LINEA.sub(r"$\1$", texto)
+    return texto
+
 # Cambia los subíndices y superíndices de markdown a latex
 def traducir_indices(trozo):
     trozo = RE_SUB.sub(r"$_{\1}$", trozo)
@@ -53,22 +67,44 @@ def latex_completo(trozo):
     return True
 # Que nos devuelva un booleano, si lo consideramos fórmula o no
 def parece_formula(trozo):
+    trozo = trozo.strip()
+
+    # Un trozo vacío no es una fórmula: evitamos generar un $$ suelto
+    if not trozo:
+        return False
+
+    # Checkeamos que tenga todos los trozos de la fórmula
     if not latex_completo(trozo):
         return False
+
+    # Un símbolo o una unidad sueltos ($E$, $L$, $pA$, $k_1$) son notación
+    # matemática aunque no lleven llaves ni barras: van en cursiva matemática
+    # Nuestra fórmula más larga solo detectable por longitud es de 12 caracteres
+    if len(trozo) <= 12:
+        return True
+
     return bool(RE_MARCADORES.search(trozo))
 # Dejamos como solo texto las ecuaciones que aparezcan cortadas sin afectar a las demás
 def sanear_latex(texto):
-    # Troceamos el chunk
+    # Troceamos el texto por los $ o $$
     partes = RE_DELIM.split(texto)
     salida = []
-    # Vamos cacho a cacho del chunk
+    dentro = False                      # Si True, el trozo iba entre $ o $$
+
+    # Vamos para cada uno de los trozos partidos
     for parte in partes:
+        # Usamos este if para contabilizar, cada vez que se encuentra un $ o $$ lo cambia y vemos la alternancia
+        # entre, está dentro de una fórmula y no
         if parte in ("$", "$$"):
+            dentro = not dentro         # cada delimitador cambia el estado así sabemos cuando estamos en fórmula o no
             continue
-        # Si parece fórmula le devolvemos los $
-        if parece_formula(parte):
-            salida.append(f"${parte}$")
+
+        if dentro:
+            # Venía entre $: se los devolvemos solo si es LaTeX válido.
+            # Si estaba roto, se queda como texto plano
+            salida.append(f"${parte}$" if parece_formula(parte) else parte)
         else:
+            # Era prosa: nunca se convierte en fórmula
             salida.append(traducir_indices(parte))
 
     return "".join(salida)
@@ -256,19 +292,11 @@ if pregunta:
             st.error(str(error))    # Printeamos el error en la app
             st.stop()               # Paramos la app
 
-        # --- diagnóstico temporal ---
-        bruta = respuesta
-        limpia = sanear_latex(bruta)
-
-        st.code(repr(bruta)[:1500], language="text")  # lo que dio el modelo
-        st.code(repr(limpia)[:1500], language="text")  # lo que sale de sanear_latex
-
-        respuesta = limpia
         # La repasamos para corregir y la reprinteamos
-        respuesta = sanear_latex(respuesta)
+        respuesta = sanear_latex(normalizar_delimitadores(respuesta))
 
 
-        #contenedor.markdown(respuesta)
+        contenedor.markdown(respuesta)
 
         # Creamos el desplegable con los chunks para esa pregunta
         mostrar_fuentes(recuperados)
