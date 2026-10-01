@@ -32,10 +32,10 @@ tesis.docx  (251 MB, 158 páginas)
     ├── ingest.py ............... Markdown → 76 secciones con ruta jerárquica
     │                              y figuras emparejadas con sus pies
     │
-    ├── chunk.py ................ 383 fragmentos de ~875 caracteres
-    │                              con solapamiento de 150
+    ├── chunk.py ................ 444 fragmentos de ~875 caracteres
+    │                              con solape de 2 frases completas
     │
-    ├── embed.py ................ 383 vectores de 768 dimensiones
+    ├── embed.py ................ 444 vectores de 768 dimensiones
     │                              (modelo multilingüe, ejecutado en local)
     │
     ├── retrieve.py ............. similitud coseno → los 5 fragmentos más cercanos
@@ -196,13 +196,19 @@ con pie, ninguno duplicado.
 
 ### Chunking
 
-Tamaño objetivo de 1.000 caracteres con 150 de solapamiento. Tres refinamientos sobre
-el corte por posición:
+Tamaño **objetivo** de 1.000 caracteres: si una frase o una ecuación no cabe, el
+fragmento se pasa de tamaño antes que partirla. Cuatro reglas:
 
 - **Corte por frases**, no por número de caracteres, para no partir ideas a la mitad.
-- **Unidades indivisibles**: una línea sin puntuación de frase (una ecuación, una fila
-  de tabla, un pie de figura) se trata como un bloque que nunca se parte. Son 298 de
-  las 820 líneas del documento.
+- **Fórmulas protegidas**: antes de cortar nada, cada expresión LaTeX se sustituye por
+  un marcador numerado que no contiene puntos ni saltos de línea, y se restituye
+  después. Así ningún criterio de corte puede partir una fórmula, ni siquiera las de
+  bloque que ocupan varias líneas. No es una comprobación: es imposible por
+  construcción.
+- **Solape por frases**: cada fragmento arranca repitiendo las dos últimas frases
+  completas del anterior, con sus ecuaciones dentro. La versión anterior arrastraba los
+  últimos 150 caracteres a ciegas, lo que cortaba fórmulas por la mitad en el 4 % de
+  los fragmentos.
 - **Fusión de huérfanos**: un resto final de menos de 300 caracteres se une al
   fragmento anterior en vez de quedar suelto sin contexto.
 
@@ -212,7 +218,37 @@ se vectoriza**. Esto resuelve el problema de las secciones con títulos idéntic
 `4.2.1 C90 on Au(111)` y `4.3.1 C90 on Au(111)` hablan de cosas distintas, y la ruta
 las separa en el espacio de embeddings.
 
-Distribución resultante: media 875 caracteres, mínimo 321, máximo 1.265.
+Distribución resultante: media 874 caracteres, mínimo 304, máximo 1.262. Y el dato que
+importa: **0 de 444 fragmentos contienen una fórmula partida** (delimitadores sin
+pareja o llaves descuadradas), frente a 17 antes del cambio.
+
+### Un bug silencioso: los subíndices desaparecidos
+
+El Markdown que produce pandoc viene lleno de marcas de énfasis (`**Figure 4.5**`,
+`**a)**`), que son ruido tanto para el modelo de embeddings como para el contexto del
+LLM. El pipeline las eliminaba con una expresión regular que borraba rachas de uno a
+tres `*` o `_`.
+
+El problema es que **en LaTeX el guion bajo es el subíndice**. Esa limpieza se llevaba
+por delante `k_{1}`, `E_{F}`, `V_{bias}` y todos los demás, en toda la tesis. El
+sistema no fallaba de forma visible: simplemente indexaba y le entregaba al modelo
+fórmulas como `T1D` y `k12`, que el modelo reproducía fielmente.
+
+Se localizó por bisección sobre las etapas del pipeline —comprobando en qué archivo
+intermedio desaparecía una cadena concreta— y se cuantificó antes de corregirlo:
+
+| Alcance del regex | Cambios en prosa | Cambios dentro de fórmulas |
+|---|---|---|
+| `[*_]{1,3}` (original) | 1.827 | 513 |
+| `[*]{2,3}` (actual) | 1.552 | **0** |
+
+En toda la tesis, el guion bajo **no aparece ni una sola vez** como marca de énfasis
+fuera de una fórmula: pandoc usa asteriscos. Y `**`, `__`, `***` o `___` no significan
+nada en LaTeX —`a__b` es un error de compilación—, así que acotar el regex a rachas de
+dos o tres asteriscos conserva el 85 % de la limpieza sin poder tocar una fórmula. No
+es seguro por casualidad estadística: lo es por construcción.
+
+El efecto sobre el sistema se ve en el recall estricto, más abajo: 73 % → 91 %.
 
 ### Modelo de embeddings multilingüe
 
@@ -221,7 +257,7 @@ situaría "corriente túnel" y "tunnelling current" en puntos alejados del espac
 vectorial y el sistema no encontraría nada. `multilingual-e5-base` los alinea.
 
 Los vectores se normalizan a longitud 1, de forma que la similitud coseno se reduce a
-un producto escalar y la búsqueda sobre los 383 fragmentos es una única multiplicación
+un producto escalar y la búsqueda sobre los 444 fragmentos es una única multiplicación
 matriz-vector.
 
 ### Secciones excluidas del índice
@@ -243,17 +279,25 @@ Esto no es un ejercicio de estilo: el modelo local no cabe en la memoria del ser
 donde se desplegará la aplicación, así que el sistema tiene que poder usar los dos sin
 cambiar nada más.
 
+Hay tres backends (Ollama, Anthropic y Google), cada uno con su versión normal y su
+versión en *streaming*, y todos con la misma firma. Las peticiones HTTP se construyen
+con `urllib` de la biblioteca estándar, igual que las de Ollama: **ninguna dependencia
+nueva**, lo que importa en un servidor con memoria justa. Los códigos de error del
+proveedor se traducen a frases que un visitante entiende ("la clave no es válida", "el
+modelo está saturado") en lugar de propagar una traza de Python a la interfaz.
+
 ### Renderizado de LaTeX en la interfaz
 
-Los fragmentos recuperados pueden contener ecuaciones partidas por el chunking, con
-delimitadores sin pareja que rompen el renderizador. En lugar de intentar emparejar
-delimitadores en un texto truncado, la interfaz **parte el fragmento por los `$`** y
-evalúa cada trozo por separado: es fórmula si contiene marcadores inequívocos de LaTeX
-(`{`, `}`, `\`) y si sus delimitadores estructurales (`\left`/`\right`,
-`\begin`/`\end`, llaves) están balanceados.
+La interfaz **parte el texto por los `$`** y evalúa cada trozo por separado: es fórmula
+si contiene marcadores inequívocos de LaTeX (`{`, `}`, `\`, `=`) y si sus delimitadores
+estructurales (`\left`/`\right`, `\begin`/`\end`, llaves) están balanceados. Los trozos
+que no lo son se muestran como texto plano, y los subíndices y superíndices de pandoc
+(`C~90~`, `2.6^o^`) se traducen a LaTeX para que se rendericen bien.
 
-Los trozos que no lo son se muestran como texto plano, y los subíndices y superíndices
-de pandoc (`C~90~`, `2.6^o^`) se traducen a LaTeX para que se rendericen bien.
+Esto se escribió cuando el chunking partía fórmulas y los fragmentos llegaban con
+delimitadores sin pareja. Desde que el troceo las respeta, **la red de seguridad casi
+nunca se activa**: queda para la salida del modelo de lenguaje, que no siempre respeta
+el formato que se le pide.
 
 ---
 
@@ -280,38 +324,51 @@ complace al usuario.
 
 | k | Recall (alguna sección) | Recall (todas) | Posición media del 1er acierto |
 |---|---|---|---|
-| 3 | 83 % | 72 % | 1,3 |
-| 5 | 86 % | 83 % | 1,4 |
-| 10 | 92 % | 92 % | 1,8 |
+| 3 | 78 % | 69 % | 1,3 |
+| 5 | 89 % | 83 % | 1,7 |
+| 10 | 89 % | 86 % | 1,7 |
 
-Por tipo de pregunta, con k = 5: comparativa y fórmula 100 %, numérica y general 83 %,
+Por tipo de pregunta, con k = 5: comparativa, fórmula y numérica 100 %, general 83 %,
 factual 77 %.
+
+**k = 5 es el punto de equilibrio.** Pasar de 5 a 10 fragmentos no mejora el recall por
+sección (89 % → 89 %) ni el estricto (91 % → 91 %), y duplica el contexto que hay que
+pagar en cada llamada al modelo.
 
 ### El recall por sección sobreestima el resultado
 
 Once preguntas llevan anotado además el **dato concreto** que la respuesta necesita
-(un valor, una expresión). Comprobar si ese dato llega realmente al contexto da un
-resultado bastante más bajo:
+(un valor, una expresión). Comprobar si ese dato llega de verdad al contexto es una
+métrica más exigente, y fue la que delató el bug de los subíndices:
 
-| Métrica | k = 5 | k = 10 |
+| Métrica | Antes del arreglo (k = 5) | Ahora (k = 5) |
 |---|---|---|
-| Recall por sección | 86 % | 92 % |
-| Recall estricto (el dato llega) | 73 % | 73 % |
+| Recall por sección | 86 % | 89 % |
+| Recall estricto (el dato llega) | 73 % | **91 %** |
 
-La diferencia se explica porque una sección larga se reparte en varios fragmentos, y
-el recall por sección da por bueno cualquiera de ellos aunque no contenga el dato.
-Ampliar k no mejora el recall estricto: los tres fragmentos que fallan
-(dos expresiones matemáticas y una constante física) **no aparecen en ninguna
-posición**, porque un texto compuesto casi por completo de LaTeX tiene poco contenido
-semántico que vectorizar. Es el caso donde una búsqueda híbrida (vectorial + palabras
-clave) aportaría más.
+El recall por sección apenas se movió, y era de esperar: los embeddings se apoyan en la
+prosa, que no cambió. Con 36 preguntas, una pregunta vale 2,8 puntos, así que esas
+diferencias son ruido.
+
+El recall estricto sí dio un salto de 18 puntos, y la razón es directa: varias de esas
+once cadenas son expresiones LaTeX (`\varphi(x) = \left\{ \begin{array}{r}`,
+`Norm.\ \mathrm{\Delta}Purcell = \ \frac`). Mientras los subíndices estaban rotos,
+**esas cadenas no podían aparecer en el índice**, así que el buscador no tenía forma de
+acertar. No era un problema de recuperación: era un problema de datos.
+
+Queda un fallo de once: una fórmula cuya sección sí se recupera, pero que cae en el
+fragmento vecino al que trae la respuesta.
+
+La diferencia que persiste entre las dos métricas se explica porque una sección larga
+se reparte en varios fragmentos, y el recall por sección da por bueno cualquiera de
+ellos aunque no contenga el dato.
 
 ### El umbral de similitud no discrimina
 
 | Grupo | Similitud media | Mínimo | Máximo |
 |---|---|---|---|
-| Preguntas con respuesta en la tesis | 0,836 | 0,748 | — |
-| Preguntas trampa | 0,833 | — | 0,877 |
+| Preguntas con respuesta en la tesis | 0,836 | 0,755 | — |
+| Preguntas trampa | 0,833 | — | 0,872 |
 
 Las dos distribuciones están superpuestas: la pregunta trampa con mayor similitud
 supera a cualquier pregunta legítima, y la más baja de estas queda por debajo de la
@@ -369,13 +426,17 @@ que detecta caracteres CJK en la respuesta.
 
 ## Limitaciones conocidas
 
-- **El dato concreto no siempre llega.** El recall estricto (73 %) es 13 puntos más
-  bajo que el recall por sección (86 %), y ampliar k no lo mejora. Los fragmentos que
-  fallan son mayoritariamente expresiones matemáticas.
+- **El dato concreto no siempre llega.** El recall estricto (91 %) sigue por debajo del
+  recall por sección (89 % de secciones correctas no garantiza el fragmento correcto).
+  El caso que falla es una expresión matemática que cae en el fragmento contiguo.
 
 - **Redundancia en la recuperación.** Con frecuencia los 5 fragmentos recuperados
   pertenecen a la misma sección, desaprovechando contexto que podría cubrir el tema
   desde varios ángulos. Una técnica de diversificación (MMR) lo mitigaría.
+
+- **Las figuras se asocian a la sección, no al fragmento.** Todos los fragmentos de una
+  sección arrastran todas sus figuras, de modo que al recuperar varios fragmentos
+  vecinos la interfaz repite la misma imagen.
 
 - **Preguntas de alcance amplio.** "¿De qué trata la tesis?" requiere información
   repartida por todo el documento y el sistema solo dispone de 5 fragmentos. Es una
@@ -395,7 +456,12 @@ que detecta caracteres CJK en la respuesta.
 
 ## Pendiente
 
-- [ ] Backends de API (Anthropic, Google) para el despliegue
+- [x] Backends de API (Anthropic, Google) con traducción de errores HTTP a mensajes
+      legibles
+- [x] Selector de proveedor y campo de clave en la interfaz: la clave vive solo en la
+      sesión del visitante, nunca se escribe en disco ni en los registros
+- [ ] Reintentos con espera creciente: el nivel gratuito de Google devuelve 503 con
+      frecuencia
 - [ ] Despliegue público con BYOK
 - [ ] *(opcional)* Búsqueda híbrida vectorial + BM25
 - [ ] *(opcional)* Diversificación de resultados (MMR)
