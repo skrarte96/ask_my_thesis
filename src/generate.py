@@ -275,7 +275,14 @@ def llamar_google(mensajes, modelo, clave=None):
     cuerpo = {
         "system_instruction": {"parts": [{"text": sistema}]},
         "contents": [{"role": "user", "parts": [{"text": usuario}]}],
-        "generationConfig": {"temperature": TEMPERATURA, "maxOutputTokens": MAX_TOKENS},  # Su formato de cuerpo
+        "generationConfig": {
+            "temperature": TEMPERATURA,
+            "maxOutputTokens": MAX_TOKENS,
+            # La tarea es redactar a partir de un contexto que ya le damos, no razonar.
+            # Sin esto el razonamiento interno comparte el presupuesto de tokens con la
+            # respuesta y se la come: 223 tokens pensando por 15 de respuesta, medido.
+            "thinkingConfig": {"thinkingBudget": 0},
+        },  # Su formato de cuerpo
     }
     peticion = crear_peticion(url, cabeceras, cuerpo)                        # Creamos petición
     try:
@@ -378,7 +385,14 @@ def llamar_google_stream(mensajes, modelo, clave=None):
     cuerpo = {
         "system_instruction": {"parts": [{"text": sistema}]},
         "contents": [{"role": "user", "parts": [{"text": usuario}]}],
-        "generationConfig": {"temperature": TEMPERATURA, "maxOutputTokens": MAX_TOKENS},
+        "generationConfig": {
+            "temperature": TEMPERATURA,
+            "maxOutputTokens": MAX_TOKENS,
+            # La tarea es redactar a partir de un contexto que ya le damos, no razonar.
+            # Sin esto el razonamiento interno comparte el presupuesto de tokens con la
+            # respuesta y se la come: 223 tokens pensando por 15 de respuesta, medido.
+            "thinkingConfig": {"thinkingBudget": 0},
+        },
     }
     # Creamos petición
     peticion = crear_peticion(url, cabeceras, cuerpo)

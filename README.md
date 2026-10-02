@@ -358,6 +358,12 @@ El modelo de embeddings cabe sin recortes: no hizo falta bajar a una variante m�
 pequeña. Lo único que no puede existir en el servidor es Ollama, de modo que la versión
 pública funciona exclusivamente con backends de API.
 
+En los modelos de Gemini con razonamiento, el presupuesto de maxOutputTokens lo comparten el
+pensamiento interno y la respuesta visible. Medido: 223 tokens de razonamiento por 15 de 
+respuesta para un simple saludo. Con un contexto de cinco fragmentos, eso truncaba la respuesta
+a media frase. Como la tarea es redactar a partir de un contexto ya recuperado y no razonar,
+el razonamiento se desactiva: respuestas completas y además más rápidas.
+
 ---
 
 ## Evaluación
