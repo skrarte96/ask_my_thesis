@@ -37,9 +37,13 @@ ESPERA = 120                       # Segundos de espera de la petición
 MENSAJES_HTTP = {
     401: "La clave de API no es válida. / The API key is not valid.",
     403: "La clave no tiene permiso para usar este modelo. / The key cannot use this model.",
-    429: "Demasiadas peticiones o sin saldo. / Too many requests or no credit left.",
+    429: "Has superado el límite de peticiones o no te queda saldo. Prueba a cambiar "
+         "de proveedor en la barra lateral. / Rate limit or no credit left. Try "
+         "another provider in the sidebar.",
     500: "Error interno del proveedor. Inténtalo otra vez. / Provider error. Try again.",
-    503: "El modelo está saturado. Inténtalo en unos segundos. / Model overloaded. Try again shortly."
+    503: "El modelo está saturado. Inténtalo en unos segundos o cambia de proveedor "
+     "en la barra lateral. / Model overloaded. Try again shortly or switch "
+     "provider in the sidebar."
 }
 
 # El prompt del sistema.
