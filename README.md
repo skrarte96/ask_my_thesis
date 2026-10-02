@@ -1,5 +1,7 @@
 # Ask My Thesis
 
+### ▶ [Probar la aplicación](https://ask-my-thesis.streamlit.app)
+
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22911361.svg)](https://doi.org/10.5281/zenodo.22911361)
 
 Sistema de preguntas y respuestas (RAG) sobre mi tesis doctoral en física, sobre
@@ -13,7 +15,9 @@ explícitamente cuándo la información no está en ella, en lugar de inventarla
 La interfaz muestra, junto a cada respuesta, los fragmentos recuperados con sus
 ecuaciones renderizadas y las figuras originales de la tesis con sus pies.
 
-**Estado: funcional en local.** Queda el despliegue público.
+**Estado: desplegado y funcionando.** La aplicación pública usa el patrón BYOK: cada
+visitante introduce su propia clave de API, que se usa solo durante su visita y no se
+guarda en ningún sitio. Hay nivel gratuito en Google AI Studio.
 
 ---
 
@@ -299,6 +303,30 @@ delimitadores sin pareja. Desde que el troceo las respeta, **la red de seguridad
 nunca se activa**: queda para la salida del modelo de lenguaje, que no siempre respeta
 el formato que se le pide.
 
+### Despliegue
+
+La aplicación corre en Streamlit Community Cloud, con un límite de 2,7 GB de memoria.
+Tres decisiones hicieron falta para que cupiera y arrancara:
+
+**El índice se versiona.** La regla de partida era «en el repositorio va lo que no se
+puede reconstruir», pero en el servidor no hay `.docx` ni pandoc, así que la regla real
+es **lo que el servidor no puede reconstruir**. `chunks.json` (2 MB) y
+`embeddings.npy` (1,3 MB) van al repositorio; el resto de `data/processed/` no.
+
+**PyTorch en versión de CPU.** `pip install torch` en Linux trae por defecto el soporte
+de GPU de NVIDIA: 2,5 GB inútiles en un servidor sin GPU. Pidiendo explícitamente la
+rueda de CPU, con marcadores de entorno para que el mismo archivo siga funcionando en
+macOS, la descarga baja a 196 MB.
+
+**Dos archivos de dependencias.** `requirements.txt` declara solo lo que necesita la
+aplicación (cuatro paquetes; pip resuelve el resto), y `requirements-pipeline.txt`
+añade lo que hace falta para regenerar el índice. `python-docx` y `Pillow` no se
+instalan en un servidor donde la conversión del documento nunca ocurre.
+
+El modelo de embeddings cabe sin recortes: no hizo falta bajar a una variante más
+pequeña. Lo único que no puede existir en el servidor es Ollama, de modo que la versión
+pública funciona exclusivamente con backends de API.
+
 ---
 
 ## Evaluación
@@ -324,16 +352,39 @@ complace al usuario.
 
 | k | Recall (alguna sección) | Recall (todas) | Posición media del 1er acierto |
 |---|---|---|---|
-| 3 | 78 % | 69 % | 1,3 |
-| 5 | 89 % | 83 % | 1,7 |
-| 10 | 89 % | 86 % | 1,7 |
+| 3 | 83 % | 75 % | 1,3 |
+| 5 | **94 %** | 89 % | 1,7 |
+| 10 | 94 % | 92 % | 1,7 |
 
-Por tipo de pregunta, con k = 5: comparativa, fórmula y numérica 100 %, general 83 %,
-factual 77 %.
+Por tipo de pregunta, con k = 5: comparativa, fórmula, numérica y general 100 %,
+factual 85 %.
 
 **k = 5 es el punto de equilibrio.** Pasar de 5 a 10 fragmentos no mejora el recall por
-sección (89 % → 89 %) ni el estricto (91 % → 91 %), y duplica el contexto que hay que
+sección (94 % → 94 %) ni el estricto (91 % → 91 %), y duplica el contexto que hay que
 pagar en cada llamada al modelo.
+
+### Enrutado de consultas: la pregunta que la búsqueda vectorial no puede responder
+
+«¿De qué trata la tesis?» fallaba siempre, y no por un defecto del índice. La búsqueda
+vectorial compara el **significado de la pregunta** con el de cada fragmento, y una
+petición de resumen no se parece semánticamente a ningún párrafo de física concreto.
+Ningún modelo de embeddings mejor arregla eso: esa clase de pregunta no se responde
+buscando, se responde **sabiendo a dónde ir**.
+
+La solución es detectar ese tipo de consulta con una expresión regular y, cuando
+aparece, colocar el `Abstract` al principio del contexto antes de rellenar el resto con
+los resultados de la búsqueda. El contexto no crece: sigue siendo de 5 fragmentos.
+
+| Métrica (k = 5) | Antes | Después |
+|---|---|---|
+| Recall (alguna sección) | 89 % | **94 %** |
+| Recall (todas) | 83 % | **89 %** |
+| Preguntas de tipo *general* | 83 % | **100 %** |
+| Preguntas de tipo *factual* | 77 % | **85 %** |
+
+El `Resumen` en español sigue fuera del índice por el efecto imán descrito más abajo:
+una pregunta en español recupera el `Abstract` en inglés y el modelo responde en
+español, porque el idioma de la respuesta lo fija el código.
 
 ### El recall por sección sobreestima el resultado
 
@@ -343,7 +394,7 @@ métrica más exigente, y fue la que delató el bug de los subíndices:
 
 | Métrica | Antes del arreglo (k = 5) | Ahora (k = 5) |
 |---|---|---|
-| Recall por sección | 86 % | 89 % |
+| Recall por sección | 86 % | 94 % |
 | Recall estricto (el dato llega) | 73 % | **91 %** |
 
 El recall por sección apenas se movió, y era de esperar: los embeddings se apoyan en la
@@ -367,7 +418,7 @@ ellos aunque no contenga el dato.
 
 | Grupo | Similitud media | Mínimo | Máximo |
 |---|---|---|---|
-| Preguntas con respuesta en la tesis | 0,836 | 0,755 | — |
+| Preguntas con respuesta en la tesis | 0,834 | 0,739 | — |
 | Preguntas trampa | 0,833 | — | 0,872 |
 
 Las dos distribuciones están superpuestas: la pregunta trampa con mayor similitud
@@ -375,6 +426,11 @@ supera a cualquier pregunta legítima, y la más baja de estas queda por debajo 
 media de las trampas. **No existe ningún umbral que separe ambos grupos**, lo que
 descarta filtrar por similitud y obliga a delegar la abstención en el modelo de
 lenguaje mediante instrucciones explícitas.
+
+Un matiz de método: desde que hay enrutado de consultas, los resultados de las
+preguntas de resumen ya no vienen ordenados por similitud, así que esta tabla mezcla
+dos modos de recuperación. La conclusión no cambia —la superposición es de 0,1 puntos,
+no de milésimas— pero conviene decirlo antes de que lo diga otro.
 
 ### Generación
 
@@ -427,8 +483,8 @@ que detecta caracteres CJK en la respuesta.
 ## Limitaciones conocidas
 
 - **El dato concreto no siempre llega.** El recall estricto (91 %) sigue por debajo del
-  recall por sección (89 % de secciones correctas no garantiza el fragmento correcto).
-  El caso que falla es una expresión matemática que cae en el fragmento contiguo.
+  recall por sección (94 %): acertar la sección no garantiza el fragmento. El caso que
+  falla es una expresión matemática que cae en el fragmento contiguo.
 
 - **Redundancia en la recuperación.** Con frecuencia los 5 fragmentos recuperados
   pertenecen a la misma sección, desaprovechando contexto que podría cubrir el tema
@@ -438,15 +494,16 @@ que detecta caracteres CJK en la respuesta.
   sección arrastran todas sus figuras, de modo que al recuperar varios fragmentos
   vecinos la interfaz repite la misma imagen.
 
-- **Preguntas de alcance amplio.** "¿De qué trata la tesis?" requiere información
-  repartida por todo el documento y el sistema solo dispone de 5 fragmentos. Es una
-  limitación estructural del RAG básico, no un fallo de implementación.
-
 - **Ambigüedad de las preguntas.** "¿Qué significa HOMO?" admite dos lecturas —el
   desarrollo de la sigla o el concepto físico— y el sistema resuelve la segunda. El
-  86 % de recall no es un techo del sistema sino un reflejo de esa ambigüedad
+  94 % de recall no es un techo del sistema sino un reflejo de esa ambigüedad
   inherente al lenguaje natural, que técnicas como la reescritura de consultas o la
   memoria conversacional mitigarían.
+
+- **Desajuste de vocabulario.** La segunda de las dos preguntas que fallan está
+  formulada con palabras distintas de las que usa el texto, y la búsqueda vectorial no
+  cubre esa distancia por sí sola. Es el caso de libro para una búsqueda híbrida que
+  combine vectores con coincidencia de palabras clave.
 
 - **Las referencias bibliográficas están desconectadas.** El texto contiene `[42]` y
   la bibliografía contiene la entrada 42, pero nada las enlaza. Es resoluble con una
@@ -460,9 +517,11 @@ que detecta caracteres CJK en la respuesta.
       legibles
 - [x] Selector de proveedor y campo de clave en la interfaz: la clave vive solo en la
       sesión del visitante, nunca se escribe en disco ni en los registros
+- [x] Enrutado de consultas para las preguntas de resumen
+- [x] Despliegue público con BYOK
 - [ ] Reintentos con espera creciente: el nivel gratuito de Google devuelve 503 con
       frecuencia
-- [ ] Despliegue público con BYOK
+- [ ] No repetir la misma figura cuando se recuperan varios fragmentos de una sección
 - [ ] *(opcional)* Búsqueda híbrida vectorial + BM25
 - [ ] *(opcional)* Diversificación de resultados (MMR)
 - [ ] *(opcional)* API propia con FastAPI

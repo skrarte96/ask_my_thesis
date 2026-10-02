@@ -1,11 +1,11 @@
 # Aplicación de streamlit con la estructura de preguntas y respuestas de la tesis
 from pathlib import Path
-import streamlit as st                              # Libreria de streamlit
+import streamlit as st                                          # Libreria de streamlit
 
-from src.embed import cargar_modelo                 # Para cargar el LLM que se vaya a usar
-from src.retrieve import cargar_indice, buscar      # Para cargar la tesis y buscar los chunks más adecuados
-from src.generate import generar_respuesta_stream   # Nuestro generador de respuestas
-import re                                           # Importamos regular expressions
+from src.embed import cargar_modelo                             # Para cargar el LLM que se vaya a usar
+from src.retrieve import cargar_indice, buscar                  # Para cargar la tesis y buscar los chunks más adecuados
+from src.generate import generar_respuesta_stream, es_abstencion  # Nuestro generador de respuestas y abstenciones
+import re                                                       # Importamos regular expressions
 
 RAIZ = Path(__file__).resolve().parent
 
@@ -15,10 +15,37 @@ SUBTITULO = """¡Pregúntale a mi tesis! Hazle preguntas a mi tesis doctoral y e
 
 *Ask My Thesis! Make questions to my PhD thesis and it will answer them*
 
-**Electronic and optical properties of organic molecules at metal surfaces studied by scanning tunneling microscopy**
+"""
+# Se despliega el resumen de la tesis
+RESUMEN = """Esta tesis usa microscopía y espectroscopía de efecto túnel (STM/STS)
+para estudiar la estructura electrónica de moléculas orgánicas depositadas sobre
+superficies metálicas, y cómo esas moléculas alteran los plasmones de la nanocavidad
+óptica que se forma entre la punta del microscopio y la muestra.
+En la primera parte se caracterizan **por primera vez con STM** los orbitales
+moleculares del fulertubo D5h(I)-C90 sobre Au(111), Ag(111) y NaCl/Ag(111),
+distinguiendo dos familias: unos similares a los de un nanotubo de carbono y otros
+similares a los de un fullereno.
+En la segunda, las moléculas poliaromáticas planas BPEA y BPEN sobre Au(111) y
+Ag(111) modifican sutilmente la distribución espectral de los modos plasmónicos,
+cambios que se atribuyen a nuevos estados de interfase formados alrededor de las
+moléculas.
+En la tercera, con tetrafenilporfirinas metaladas, se encuentra un método para obtener
+información óptica de moléculas adsorbidas directamente sobre metal, algo que se daba
+por descartado por el apagado (*quenching*) de la luminiscencia molecular.
 
-By Óscar Jover Arrate"""
-
+*This thesis uses scanning tunnelling microscopy and spectroscopy (STM/STS) to study
+the electronic structure of organic molecules on metal surfaces, and how those
+molecules alter the plasmons of the optical nanocavity formed between the microscope
+tip and the sample.*
+*The first part reports the first STM characterisation of the molecular orbitals of
+the D5h(I)-C90 fullertube on Au(111), Ag(111) and NaCl/Ag(111), distinguishing two
+families: carbon-nanotube-like and fullerene-like.*
+*The second shows that the planar polyaromatic molecules BPEA and BPEN on Au(111) and
+Ag(111) subtly reshape the spectral distribution of the plasmonic modes, changes
+attributed to new interface states forming around the molecules.*
+*The third, using metalated tetraphenyl porphyrins, finds a way to extract optical
+information from molecules adsorbed directly on metal — long thought impossible
+because of the quenching of molecular luminescence.*"""
 # Modelo de ollama a emplear
 MODELO_OLLAMA = "qwen2.5:14b"
 
@@ -171,7 +198,40 @@ st.markdown("""
 # Añadimos título y subtítulo
 st.title(TITULO)
 st.markdown(SUBTITULO)
-st.caption("Cada respuesta incluye las fuentes de la tesis: despliégalas para ver el texto original y las figuras.")
+
+# Creamos el historial si todavía no existe
+if "historial" not in st.session_state:
+    st.session_state.historial = []
+
+# Preguntas de ejemplo para quien llega sin saber de qué va la tesis
+EJEMPLOS = [
+    "¿De qué trata la tesis?",
+    "¿Qué es el efecto túnel cuántico?",
+    "¿Qué moléculas se estudian y sobre qué superficies?",
+]
+
+# Guardamos aquí la pregunta si el visitante pulsa uno de los botones
+if "sugerida" not in st.session_state:
+    st.session_state.sugerida = None
+
+# Enseñamos primero la portada de la tesis
+portada = RAIZ / "data" / "media" / "portada.jpg"
+if portada.exists():
+    izq, centro, der = st.columns([1, 2, 1])
+    with centro:
+        st.image(str(portada))
+# Luego el resumen
+st.markdown(RESUMEN)
+# Hueco solo para las sugerencias: estas sí desaparecen al usar una
+hueco_sugerencias = st.empty()
+
+if not st.session_state.historial:
+    with hueco_sugerencias.container():
+        st.caption("Prueba con una de estas / Try one of these:")
+        for i, ejemplo in enumerate(EJEMPLOS):
+            if st.button(ejemplo, key=f"ejemplo_{i}", use_container_width=True):
+                st.session_state.sugerida = ejemplo
+
 # Sacamos los chunks, vectores y el modelo
 chunks, vectores, modelo = preparar()
 
@@ -219,13 +279,14 @@ with st.sidebar:
             "Se usa solo durante tu visita: no se guarda ni se registra en ningún sitio. / "
             "Used only during your visit: never stored, never logged."
         )
+    st.divider()
+    st.caption(
+        "Tesis/Thesis: [10.5281/zenodo.22911361](https://doi.org/10.5281/zenodo.22911361)  \n"
+        "Código/Code: [GitHub](https://github.com/skrarte96/ask_my_thesis)"
+    )
 
 # Directamente, forzamos a que si tenemos el modelo de ollama elegido se escoja el modelo que tenemos descargado
 modelo_llm = MODELO_OLLAMA if backend == "ollama" else None
-
-# Creamos el historial si todavía no existe
-if "historial" not in st.session_state:
-    st.session_state.historial = []
 
 # Como con cada interacción se nos reejecuta todo, tenemos que repintar toda la conversación
 # Cogemos los turnos de conversación guardados
@@ -240,11 +301,14 @@ for turno in st.session_state.historial:
             # Hacemos desplegable de chunks
             mostrar_fuentes(turno["fuentes"])
 
-# Creamos input donde sel usuario hará la pregunta
-pregunta = st.chat_input("Pregunta algo sobre la tesis...")
+# Creamos input donde el usuario hará la pregunta o escoge una de las preguntas sugeridas
+pregunta = st.chat_input("Pregunta algo sobre la tesis...") or st.session_state.sugerida
+st.session_state.sugerida = None      # se consume una sola vez
 
 # En caso de que se haya escrito algo, se guarda la pregunta
 if pregunta:
+    # Quitamos las sugerencias en cuanto hay una pregunta
+    hueco_sugerencias.empty()
     # En caso de que tengamos elegido un modelo distinto de ollama pero no tengamos clave API, damos mensaje de error
     if backend != "ollama" and not clave:
         st.warning(
@@ -302,11 +366,22 @@ if pregunta:
         contenedor.markdown(respuesta)
 
         # Creamos el desplegable con los chunks para esa pregunta
-        mostrar_fuentes(recuperados)
+        # Si el modelo se ha abstenido no hay nada que respaldar, así que no
+        # enseñamos fuentes: contradiría la propia respuesta
+        if not es_abstencion(respuesta):
+            mostrar_fuentes(recuperados)
 
     # Añadimos al historial la respuesta generada por el asistente
     st.session_state.historial.append({
         "rol": "assistant",
         "texto": respuesta,
-        "fuentes": recuperados,
+        "fuentes": [] if es_abstencion(respuesta) else recuperados,
     })
+# Aviso al pie: al ir el último, se pinta justo encima del cuadro de escribir
+st.caption(
+    "Las respuestas las genera un modelo de lenguaje a partir del texto de la tesis "
+    "y pueden contener errores. Despliega las fuentes de cada respuesta para ver el "
+    "fragmento original y sus figuras.  \n"
+    "*Answers are generated by a language model from the thesis text and may contain "
+    "errors. Open the sources under each answer to see the original fragment.*"
+)

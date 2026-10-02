@@ -63,7 +63,7 @@ traduzcas nombres de moléculas, técnicas o materiales.
 
 FÓRMULAS: si los fragmentos contienen una expresión matemática relevante para la \
 pregunta, INCLÚYELA literalmente en LaTeX. Usa $ para las expresiones en \
-línea y $$ para las de bloque. NUNCA uses \( \) ni \[ \] como delimitadores.
+línea y $$ para las de bloque. NUNCA uses \\( \\) ni \\[ \\] como delimitadores.
 
 DATOS: cada número y unidad debe aparecer en los fragmentos, referido a la misma \
 magnitud. No reutilices un dato para algo distinto de aquello a lo que se refiere.
@@ -125,6 +125,21 @@ MENSAJE_FALLO = {
     "español": "No he podido generar una respuesta fiable a esta pregunta.",
     "inglés": "I could not generate a reliable answer to this question.",
 }
+
+# Las frases exactas con las que el modelo se abstiene. Tienen que coincidir
+# palabra por palabra con las que se le piden en el prompt SISTEMA.
+ABSTENCION = {
+    "español": "Esa información no aparece en la tesis.",
+    "inglés": "That information does not appear in the thesis.",
+}
+
+# True si la respuesta es una abstención o el mensaje de fallo, o sea si no hay
+# nada que respaldar con fuentes
+def es_abstencion(texto):
+    limpio = texto.strip()
+    frases = list(ABSTENCION.values()) + list(MENSAJE_FALLO.values())
+    return any(limpio.startswith(f) for f in frases)
+
 # Anthropic y Google reciben los mensajes de sistema y usuario por separado, así los deshacemos
 def separar_mensajes(mensajes):
     # textos vacíos
