@@ -198,6 +198,14 @@ Para poder buscar lejos sin riesgo de emparejar una figura con el pie de la sigu
 la búsqueda se detiene en cuanto encuentra otra imagen. Resultado: 62 de 62 figuras
 con pie, ninguno duplicado.
 
+Las figuras se asocian a la **sección**, no al fragmento, de modo que todos los
+fragmentos de una sección arrastran todas sus figuras. Parece redundancia y se consideró
+filtrarlas, pero se decidió mantenerlo: en la interfaz cada fuente vive en un
+desplegable cerrado, así que la repetición solo aparece si alguien abre a propósito
+varios fragmentos de la misma sección — y en ese momento tener la figura en cada uno es
+más útil que no tenerla. Visto así, no es redundancia: es que **cada fragmento está
+completo por sí mismo**.
+
 ### Chunking
 
 Tamaño **objetivo** de 1.000 caracteres: si una frase o una ecuación no cabe, el
@@ -302,6 +310,29 @@ Esto se escribió cuando el chunking partía fórmulas y los fragmentos llegaban
 delimitadores sin pareja. Desde que el troceo las respeta, **la red de seguridad casi
 nunca se activa**: queda para la salida del modelo de lenguaje, que no siempre respeta
 el formato que se le pide.
+
+### Qué ve quien llega sin haber leído la tesis
+
+Un cuadro de texto vacío no invita a preguntar nada sobre una tesis de física que no
+conoces. La aplicación abre con la portada, un resumen de cuatro frases en español e
+inglés, y tres preguntas de ejemplo en las que se puede pulsar. Las sugerencias
+desaparecen en cuanto hay conversación; la portada y el resumen se quedan, para que
+siempre haya a dónde volver.
+
+Tiene además un efecto que no habíamos buscado: **mientras el modelo redacta, hay algo
+que leer**. El reloj marca lo mismo, pero la espera se nota menos. Es la misma idea que
+el aviso de "Pensando…" y que mostrar la respuesta palabra a palabra en lugar de
+esperar a tenerla entera: tres capas de la misma decisión.
+
+**Cuando el sistema se abstiene, no se muestran fuentes.** Enseñar cinco fragmentos de
+la tesis justo debajo de "esa información no aparece en la tesis" se contradice: sugiere
+que el buscador no supo mirar, cuando lo que pasó es que miró, trajo lo más parecido y
+fue honesto al decir que no servía. Las frases de abstención están declaradas como
+constantes junto al prompt que las pide, para que la interfaz pueda reconocerlas.
+
+Al pie, un aviso permanente de que las respuestas las genera un modelo de lenguaje y
+pueden contener errores. Termina en una acción —desplegar las fuentes— porque un aviso
+que solo advierte deja al lector sin salida, y aquí la comprobación existe de verdad.
 
 ### Despliegue
 
@@ -490,10 +521,6 @@ que detecta caracteres CJK en la respuesta.
   pertenecen a la misma sección, desaprovechando contexto que podría cubrir el tema
   desde varios ángulos. Una técnica de diversificación (MMR) lo mitigaría.
 
-- **Las figuras se asocian a la sección, no al fragmento.** Todos los fragmentos de una
-  sección arrastran todas sus figuras, de modo que al recuperar varios fragmentos
-  vecinos la interfaz repite la misma imagen.
-
 - **Ambigüedad de las preguntas.** "¿Qué significa HOMO?" admite dos lecturas —el
   desarrollo de la sigla o el concepto físico— y el sistema resuelve la segunda. El
   94 % de recall no es un techo del sistema sino un reflejo de esa ambigüedad
@@ -502,8 +529,16 @@ que detecta caracteres CJK en la respuesta.
 
 - **Desajuste de vocabulario.** La segunda de las dos preguntas que fallan está
   formulada con palabras distintas de las que usa el texto, y la búsqueda vectorial no
-  cubre esa distancia por sí sola. Es el caso de libro para una búsqueda híbrida que
-  combine vectores con coincidencia de palabras clave.
+  cubre esa distancia por sí sola.
+
+  La solución habitual sería una **búsqueda híbrida**: combinar la vectorial, que
+  compara significados, con una por palabras clave tipo BM25, que premia los términos
+  raros que el promedio de un vector diluye (`\mathcal`, `BPEN`, `FeClTPP`). Se
+  descartó tras mirar qué arreglaría de verdad: ayudaría con el fallo de recall
+  estricto y con las preguntas que citan un nombre exacto, pero **no con este**, donde
+  el problema es justo que las palabras de la pregunta no están en el texto. Una
+  técnica que resuelve uno de los dos casos no justifica duplicar la capa de
+  recuperación.
 
 - **Las referencias bibliográficas están desconectadas.** El texto contiene `[42]` y
   la bibliografía contiene la entrada 42, pero nada las enlaza. Es resoluble con una
@@ -519,13 +554,17 @@ que detecta caracteres CJK en la respuesta.
       sesión del visitante, nunca se escribe en disco ni en los registros
 - [x] Enrutado de consultas para las preguntas de resumen
 - [x] Despliegue público con BYOK
+- [x] Pantalla de bienvenida con portada, resumen y preguntas sugeridas
+- [x] Sin fuentes cuando el sistema se abstiene
 - [ ] Reintentos con espera creciente: el nivel gratuito de Google devuelve 503 con
-      frecuencia
-- [ ] No repetir la misma figura cuando se recuperan varios fragmentos de una sección
-- [ ] *(opcional)* Búsqueda híbrida vectorial + BM25
+      frecuencia. Mientras tanto, el mensaje de error sugiere cambiar de proveedor,
+      que es una salida real porque hay tres
 - [ ] *(opcional)* Diversificación de resultados (MMR)
 - [ ] *(opcional)* API propia con FastAPI
 - [ ] *(opcional)* Enlazar las citas `[N]` con la bibliografía
+
+Descartado a propósito, con el motivo en **Limitaciones conocidas**: la búsqueda
+híbrida vectorial + BM25, y filtrar las figuras repetidas entre fragmentos.
 
 ---
 
