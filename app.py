@@ -232,9 +232,6 @@ if not st.session_state.historial:
             if st.button(ejemplo, key=f"ejemplo_{i}", use_container_width=True):
                 st.session_state.sugerida = ejemplo
 
-# Sacamos los chunks, vectores y el modelo
-chunks, vectores, modelo = preparar()
-
 # Creamos lista de los proveedores de modelos, la key los que se verán en Streamlit y el value los que necesitamos
 # para que nuestros modelos funcionen
 PROVEEDORES = {
@@ -284,6 +281,9 @@ with st.sidebar:
         "Tesis/Thesis: [10.5281/zenodo.22911361](https://doi.org/10.5281/zenodo.22911361)  \n"
         "Código/Code: [GitHub](https://github.com/skrarte96/ask_my_thesis)"
     )
+
+# Sacamos los chunks, vectores y el modelo
+chunks, vectores, modelo = preparar()
 
 # Directamente, forzamos a que si tenemos el modelo de ollama elegido se escoja el modelo que tenemos descargado
 modelo_llm = MODELO_OLLAMA if backend == "ollama" else None
