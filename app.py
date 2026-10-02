@@ -178,9 +178,9 @@ chunks, vectores, modelo = preparar()
 # Creamos lista de los proveedores de modelos, la key los que se verán en Streamlit y el value los que necesitamos
 # para que nuestros modelos funcionen
 PROVEEDORES = {
-    "Ollama (en tu ordenador)": "ollama",
     "Google Gemini": "google",
     "Anthropic Claude": "anthropic",
+    "Ollama (solo en local)": "ollama",
 }
 
 # Enlaces a nombrar donde se debe conseguir la clave API para Google y Anthropic
@@ -201,11 +201,14 @@ with st.sidebar:
 
     # Si el backend es ollama, como necesitamos clave por el argumento en nuestra función de generate.py
     # ponemos clave = None, aparte, mencionamos que ollama debería estar corriendo en el ordenador
+    # Indicamos peso y modelo empleados por nosotros por ética
     if backend == "ollama":
         clave = None
         st.caption(
-            "Necesita Ollama corriendo en tu ordenador. / "
-            "Requires Ollama running on your machine."
+            "Solo funciona en local, con el repositorio clonado y Ollama corriendo. "
+            "El modelo es `qwen2.5:14b`, unos 9 GB de descarga:\n\n"
+            "`ollama pull qwen2.5:14b` y luego `ollama serve`\n\n"
+            "*Local only: clone the repo and run Ollama. Model: qwen2.5:14b (~9 GB).*"
         )
     # En caso de que sea un modelo distinto a ollama tendremos que pedir la API key.
     # Indicamos donde se consigue y que solo se usa durante tu visita y no se guarda en ningún lado

@@ -19,6 +19,8 @@ __pycache__/
 # Datos originales (pesan demasiado para el repo)
 data/raw/
 
-# Datos procesados y base vectorial (se regeneran)
-data/processed/
+# Datos procesados y base vectorial (necesarios chunks y embeddings para no subir la tesis, muy pesada)
+data/processed/*
+!data/processed/chunks.json
+!data/processed/embeddings.npy
 chroma_db/
