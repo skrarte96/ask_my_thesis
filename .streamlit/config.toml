@@ -1,0 +1,4 @@
+[server]
+# El vigilante de archivos solo sirve para desarrollar: en el servidor el código
+# no cambia, y al recorrer transformers genera cientos de errores de torchvision
+fileWatcherType = "none"
